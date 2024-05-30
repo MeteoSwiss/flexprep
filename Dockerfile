@@ -1,52 +1,43 @@
-FROM dockerhub.apps.cp.meteoswiss.ch/mch/python/builder AS builder
+# Use a base image with the desired operating system and dependencies
+ARG container_registry=dockerhub.apps.cp.meteoswiss.ch
 
-COPY poetry.lock pyproject.toml /src/app-root/
+FROM ${container_registry}/mch/python/builder:latest as mch-base
 
-RUN cd /src/app-root \
-    && poetry export -o requirements.txt \
-    && poetry export --dev -o requirements_dev.txt
+RUN apt-get -yqq update && apt-get install -yqq wget
 
+# Install Miniconda
+RUN wget -O ./miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+RUN bash miniconda.sh -b -p /root/miniconda
 
-FROM dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11:latest-slim AS base
+ENV PATH=/root/miniconda/bin:$PATH
 
-COPY --from=builder /src/app-root/requirements.txt /src/app-root/requirements.txt
+RUN conda config --set always_yes yes --set changeps1 no && \
+    conda config --add channels conda-forge  && \
+    conda config --set channel_priority strict 
 
-RUN cd /src/app-root \
-    && pip install -r requirements.txt
+# Install mamba package manager (faster than conda)
+RUN conda install mamba -n base -c conda-forge
 
+# Copy environment files
+COPY environment.yml /scratch/environment.yml
+# Create a mamba env based on the env.yml file
+RUN mamba env create --prefix /opt/conda-env --file /scratch/environment.yml
 
-COPY pilotecmwf_pp_starter /src/app-root/pilotecmwf_pp_starter
+# Public clone and install of meteodata-lab
+ENV METEODATALAB_BRANCH=main
+# Below ADD is needed to invalidate cache if meteodata-lab repo changes, and pip install latest version.
+ADD https://api.github.com/repos/MeteoSwiss/meteodata-lab/git/refs/heads/${METEODATALAB_BRANCH} version_meteodatalab.json
+RUN conda run -p /opt/conda-env /bin/bash -c "pip install https://github.com/MeteoSwiss/meteodata-lab/archive/refs/heads/${METEODATALAB_BRANCH}.zip"
 
-WORKDIR /src/app-root
+# Set the working directory inside the container
+WORKDIR /app
 
+# Copy the necessary files from the host to the container
+COPY app /app
 
-CMD ["python", "-m", "pilotecmwf_pp_starter"]
+# Activate the conda environment
+ENV PATH /opt/conda-env/bin:$PATH
 
-FROM base AS tester
+# Specify the command to run your data processing job
+CMD ["conda", "run", "-p", "/opt/conda-env", "python", "app_retrieve_from_s3.py"]
 
-COPY --from=builder /src/app-root/requirements_dev.txt /src/app-root/requirements_dev.txt
-RUN pip install -r /src/app-root/requirements_dev.txt
-
-COPY pyproject.toml test_ci.sh /src/app-root/
-COPY test /src/app-root/test
-
-CMD ["/bin/bash", "-c", "source /src/app-root/test_ci.sh && run_ci_tools"]
-
-FROM tester AS documenter
-
-COPY doc /src/app-root/doc
-COPY CONTRIBUTING.rst HISTORY.rst README.rst /src/app-root/
-
-CMD ["sphinx-build", "doc", "doc/_build"]
-
-FROM base AS runner
-
-ARG VERSION
-ENV VERSION=$VERSION
-
-# For running outside of OpenShift, we want to make sure that the container is run without root privileges
-# uid 1001 is defined in the base-container-images for this purpose
-USER 1001
-
-
-CMD ["python", "-m", "pilotecmwf_pp_starter"]
