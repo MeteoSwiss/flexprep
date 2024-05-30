@@ -1,0 +1,9 @@
+logging:
+  root_log_level: INFO
+  # When running in k8s, use JSON logger via env setting
+  # formatter: json
+  formatter: "standard"
+  child_log_levels:
+    mch_python_commons: DEBUG
+main:
+  app_name: pilotecmwf_pp_starter
