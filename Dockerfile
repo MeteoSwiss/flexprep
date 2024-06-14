@@ -39,5 +39,5 @@ COPY app /app
 ENV PATH /opt/conda-env/bin:$PATH
 
 # Specify the command to run your data processing job
-CMD ["conda", "run", "-p", "/opt/conda-env", "python", "app_retrieve_from_s3.py"]
+CMD ["conda", "run", "-p", "/opt/conda-env", "python", "app.py"]
 
