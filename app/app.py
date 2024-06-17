@@ -8,6 +8,7 @@ import boto3
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
 import numpy as np
+from itertools import groupby
 import meteodatalab.operators.flexpart as flx
 from meteodatalab import grib_decoder, data_source, metadata, config
 
@@ -36,6 +37,13 @@ def get_s3_client(endpoint_url, access_key, secret_key):
 s3_input = get_s3_client(S3INPUT_ENDPOINT_URL, os.getenv('S3INPUT_ACCESS_KEY'), os.getenv('S3INPUT_SECRET_KEY'))
 # NB: doesn't exist yet  
 # s3_output = get_s3_client(S3OUTPUT_ENDPOINT_URL, os.getenv('S3OUTPUT_ACCESS_KEY'), os.getenv('S3OUTPUT_SECRET_KEY'))
+
+# Define constants and input fields for flexpart
+constants = ("z", "lsm", "sdor")
+input_fields = (
+    "u", "v", "etadot", "t", "q", "sp", "10u", "10v", "2t", "2d", "tcc", "sd",
+    "cp", "lsp", "ssr", "sshf", "ewss", "nsss"
+)
 
 def download_file(s3_client, bucket, key, local_path):
     try:
@@ -115,7 +123,7 @@ def pre_process(file_objs):
 
     datafiles = [f.name for f in temp_files]
 
-    request = {"param": list(input_fields + constants)}
+    request = {"param": list(constants + input_fields)}
     with config.set_values(data_scope="ifs"):
         source = data_source.DataSource(datafiles=datafiles)
         ds_in = grib_decoder.load(source, request)
@@ -128,13 +136,15 @@ def pre_process(file_objs):
     for temp_file in temp_files:
         temp_file.close()
 
-    output_file = tempfile.NamedTemporaryFile(suffix=f"output_dispf{forecast_ref_time}{step_to_process}", delete=False)
+    output_file = tempfile.NamedTemporaryFile(suffix=f"output_dispf{forecast_ref_time}_{step_to_process}", delete=False)
     with open(output_file.name, "wb") as fout:
         for name, field in ds_out.items():
-            logging.info(f"Writing GRIB fields to {output_file.name}")
-            grib_decoder.save(field, fout)
+            if field.attrs.get('v_coord') == 'hybrid':
 
-    # NB: s3-output doesn't exist yet 
+                logging.info(f"Writing GRIB fields to {output_file.name}")
+                grib_decoder.save(field, fout)
+
+    # NB: s3-output doesn't exist yet
     # upload_file(s3_output, S3OUTPUT_BUCKET_NAME, output_file.name)
 
 def select_objects(objects):
@@ -142,9 +152,10 @@ def select_objects(objects):
 
     for item in objects.get('Contents', []):
         key = item.get('Key')
-        forecast_ref_time = datetime.strptime(key[3:11], "%Y%m%d%H")
-        valid_time_str = key[11:18]
-        valid_time_obj = datetime.strptime(valid_time_str, "%y%m%d%H")
+        forecast_ref_time_str= f"{datetime.now().year}{key[3:11]}"
+        forecast_ref_time = datetime.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
+        valid_time_str = f"{datetime.now().year}{key[11:18]}"
+        valid_time_obj = datetime.strptime(valid_time_str, "%Y%m%d%H%M")
 
         step = 0 if valid_time_obj.minute == 1 else int((valid_time_obj - forecast_ref_time).total_seconds() / 3600)
         obj_in_s3.append({
@@ -170,10 +181,14 @@ def select_objects(objects):
                 prev_step = step - TINCR
                 if prev_step in steps and file['processed'] == "N":
                     logging.info(f"Launching Pre-Processing for timestep {step}")
-                    prev_file = next((item for item in files_per_run if item['step'] == prev_step), None)
-                    if prev_file:
-                        pre_process([file, prev_file, step_zero])
-                        file['processed'] = "Y"
+                    if prev_step == 0:
+                        pre_process(step_zero +[file])
+                    else:
+                        prev_file = next((item for item in files_per_run if item['step'] == prev_step), None)
+                        if prev_file:
+                            pre_process(step_zero + [prev_file, file])
+                    file['processed'] = "Y"
+
                 else:
                     logging.info(f"Not launching Pre-Processing for timestep {step}, {prev_step} in {steps}: {prev_step in steps}, processed: {file['processed'] == 'Y'}")
 
@@ -181,3 +196,4 @@ if __name__ == "__main__":
     objects = s3_input.list_objects_v2(Bucket=S3INPUT_BUCKET_NAME)
     # NB: atm. loop through all objects on s3 but next: only on new data 
     select_objects(objects)
+    logging.info("Processing finished")
