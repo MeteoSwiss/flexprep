@@ -239,29 +239,29 @@ def select_objects(objects):
         for file in files_per_run:
             step = file["step"]
 
-        if (step - TSTART) % TINCR != 0:
-            continue
+            if (step - TSTART) % TINCR != 0:
+                continue
 
-        prev_step = step - TINCR
-        if prev_step in steps and file["processed"] == "N":
-            logging.info(f"Launching Pre-Processing for timestep {step}")
-            if prev_step == 0:
-                pre_process(step_zero + [file])
+            prev_step = step - TINCR
+            if prev_step in steps and file["processed"] == "N":
+                logging.info(f"Launching Pre-Processing for timestep {step}")
+                if prev_step == 0:
+                    pre_process(step_zero + [file])
+                else:
+                    prev_file = next(
+                        (item for item in files_per_run if item["step"] == prev_step),
+                        None,
+                    )
+                    if prev_file:
+                        pre_process(step_zero + [prev_file, file])
+                file["processed"] = "Y"
+
             else:
-                prev_file = next(
-                    (item for item in files_per_run if item["step"] == prev_step),
-                    None,
+                logging.info(
+                    f"Not launching Pre-Processing for timestep {step}: "
+                    f"prev_step in steps: {prev_step in steps}, "
+                    f"processed: {file['processed'] == 'Y'}"
                 )
-                if prev_file:
-                    pre_process(step_zero + [prev_file, file])
-            file["processed"] = "Y"
-
-        else:
-            logging.info(
-                f"Not launching Pre-Processing for timestep {step}: "
-                f"prev_step in steps: {prev_step in steps}, "
-                f"processed: {file['processed'] == 'Y'}"
-            )
 
 
 if __name__ == "__main__":
