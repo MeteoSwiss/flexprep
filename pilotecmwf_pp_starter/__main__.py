@@ -55,8 +55,8 @@ s3_input = get_s3_client(
 # )
 
 # Define constants and input fields for flexpart
-constants = ("z", "lsm", "sdor")
-input_fields = (
+constants = {"z", "lsm", "sdor"}
+input_fields = {
     "u",
     "v",
     "etadot",
@@ -75,7 +75,7 @@ input_fields = (
     "sshf",
     "ewss",
     "nsss",
-)
+}
 
 
 def download_file(s3_client, bucket, key, local_path):
@@ -116,16 +116,9 @@ def validate_dataset(ds, params, ref_time, step, prev_step):
 
 
 def process_fields(ds_out, ds_in, input_fields, constant_fields):
-    missing_fields = [
-        field
-        for field in ds_in.keys()
-        if field not in ds_out.keys() and field in input_fields and field != "etadot"
-    ]
-    missing_const = [
-        const
-        for const in ds_in.keys()
-        if const not in ds_out.keys() and const in constant_fields
-    ]
+    missing_fields = (ds_in.keys() & input_fields) - {"etadot"} - ds_out.keys()
+
+    missing_const = (ds_in.keys() & constant_fields) - ds_out.keys()
 
     for field in ds_out:
         ds_out[field] = ds_out[field].isel(time=slice(-1, None)).squeeze()
