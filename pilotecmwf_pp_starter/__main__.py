@@ -180,7 +180,7 @@ def pre_process(file_objs):
     process_fields(ds_out, ds_in, input_fields, constants)
 
     for temp_file in temp_files:
-        temp_file.close()
+        os.unlink(temp_file.name)
 
     output_file = tempfile.NamedTemporaryFile(
         suffix=f"output_dispf{forecast_ref_time}_{step_to_process}", delete=False
