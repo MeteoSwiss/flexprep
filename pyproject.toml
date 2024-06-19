@@ -3,6 +3,41 @@ name = "meteoswiss"
 url = "https://hub.meteoswiss.ch/nexus/repository/python-all/simple"
 priority = "default"
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+isort = "^5.13.2"
+pre-commit = "^3.7.1"
+codespell = "^2.3.0"
+flake8 = "^7.1.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.flake8]
+max-line-length = 88
+
+[tool.isort]
+default_section = "THIRDPARTY"
+profile = "black"
+# Headings
+import_heading_stdlib = "Standard library"
+import_heading_thirdparty = "Third-party"
+import_heading_firstparty = "First-party"
+import_heading_localfolder = "Local"
+# Known modules to avoid misclassification
+known_standard_library = [
+    # Add standard library modules that may be misclassified by isort
+]
+known_third_party = [
+    # Add third-party modules that may be misclassified by isort
+]
+known_first_party = [
+    # Add first-party modules that may be misclassified by isort
+    "meteodatalab",
+]
+
 [tool.poetry]
 name = "pilotecmwf_pp_starter"
 version = "1.0.0"
