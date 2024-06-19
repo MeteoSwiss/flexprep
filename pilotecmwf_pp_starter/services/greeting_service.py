@@ -2,11 +2,12 @@
 Services providing core functionality.
 """
 
+# Standard library
 import logging
 
+# First-party
 from pilotecmwf_pp_starter import CONFIG
 from pilotecmwf_pp_starter.domain.greeting import Greeting
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,6 @@ def get_greeting(name: str) -> Greeting:
     :return: personalized greeting
     :rtype: Greeting
     """
-    logger.debug('Personalizing greeting for %s...', name)
+    logger.debug("Personalizing greeting for %s...", name)
 
-    return Greeting(message=f'Hello, {name} from {CONFIG.main.app_name}!')
+    return Greeting(message=f"Hello, {name} from {CONFIG.main.app_name}!")
