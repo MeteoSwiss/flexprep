@@ -32,6 +32,7 @@ TSTART = int(os.getenv("TSTART", 0))
 
 
 def get_s3_client(endpoint_url, access_key, secret_key):
+    """Create and return an S3 client."""
     return boto3.client(
         "s3",
         endpoint_url=endpoint_url,
@@ -79,6 +80,7 @@ input_fields = {
 
 
 def download_file(s3_client, bucket, key, local_path):
+    """Download a file from an S3 bucket to a local path."""
     try:
         s3_client.download_file(bucket, key, local_path, Config=TRANSFER_CONFIG)
         logging.info(f"Downloaded file from S3: {key}")
@@ -87,6 +89,7 @@ def download_file(s3_client, bucket, key, local_path):
 
 
 def upload_file(s3_client, bucket, local_path):
+    """Upload a local file to an S3 bucket."""
     key = os.path.basename(local_path)
     try:
         s3_client.upload_file(local_path, bucket, key)
@@ -96,6 +99,7 @@ def upload_file(s3_client, bucket, local_path):
 
 
 def validate_dataset(ds, params, ref_time, step, prev_step):
+    """Validate the dataset to ensure it contains the required param and timesteps."""
     if not all(param in ds.keys() for param in params):
         raise ValueError("Not all requested parameters are present in the dataset")
     if not all(
@@ -116,6 +120,7 @@ def validate_dataset(ds, params, ref_time, step, prev_step):
 
 
 def process_fields(ds_out, ds_in, input_fields, constant_fields):
+    """Process the fields from the input dataset and prepare the output dataset."""
     missing_fields = (ds_in.keys() & input_fields) - {"etadot"} - ds_out.keys()
 
     missing_const = (ds_in.keys() & constant_fields) - ds_out.keys()
@@ -134,6 +139,8 @@ def process_fields(ds_out, ds_in, input_fields, constant_fields):
 
 
 def pre_process(file_objs):
+    """Pre-process file objects by downloading, validating, and processing the data."""
+
     def download_temp_file(file_info):
         temp_file = tempfile.NamedTemporaryFile(suffix=file_info["key"], delete=False)
         download_file(s3_input, S3INPUT_BUCKET_NAME, file_info["key"], temp_file.name)
@@ -196,9 +203,11 @@ def pre_process(file_objs):
     # upload_file(s3_output, S3OUTPUT_BUCKET_NAME, output_file.name)
 
 
-def select_objects(objects):
+if __name__ == "__main__":
+    objects = s3_input.list_objects_v2(Bucket=S3INPUT_BUCKET_NAME)
     obj_in_s3 = []
 
+    # Aggregate S3 content in a dict
     for item in objects.get("Contents", []):
         key = item.get("Key")
         forecast_ref_time_str = f"{datetime.now().year}{key[3:11]}"
@@ -208,6 +217,8 @@ def select_objects(objects):
 
         step = (
             0
+            # there are two steps 0 (one const and one init data)
+            # condition below to differentiate them
             if valid_time_obj.minute == 1
             else int((valid_time_obj - forecast_ref_time).total_seconds() / 3600)
         )
@@ -220,6 +231,7 @@ def select_objects(objects):
             }
         )
 
+    # Iterate though files and launch pre-processing
     obj_in_s3.sort(key=lambda x: x["forecast_ref_time"])
     for fcst_ref_time, group in groupby(
         obj_in_s3, key=lambda x: x["forecast_ref_time"]
@@ -243,29 +255,24 @@ def select_objects(objects):
                 continue
 
             prev_step = step - TINCR
-            if prev_step in steps and file["processed"] == "N":
-                logging.info(f"Launching Pre-Processing for timestep {step}")
-                if prev_step == 0:
-                    pre_process(step_zero + [file])
-                else:
-                    prev_file = next(
-                        (item for item in files_per_run if item["step"] == prev_step),
-                        None,
-                    )
-                    if prev_file:
-                        pre_process(step_zero + [prev_file, file])
-                file["processed"] = "Y"
-
-            else:
+            if prev_step not in steps or file["processed"] == "Y":
                 logging.info(
                     f"Not launching Pre-Processing for timestep {step}: "
                     f"prev_step in steps: {prev_step in steps}, "
                     f"processed: {file['processed'] == 'Y'}"
                 )
+                continue
 
+            logging.info(f"Launching Pre-Processing for timestep {step}")
+            if prev_step == 0:
+                pre_process(step_zero + [file])
+            else:
+                prev_file = next(
+                    (item for item in files_per_run if item["step"] == prev_step),
+                    None,
+                )
+                if prev_file:
+                    pre_process(step_zero + [prev_file, file])
+            file["processed"] = "Y"
 
-if __name__ == "__main__":
-    objects = s3_input.list_objects_v2(Bucket=S3INPUT_BUCKET_NAME)
-    # NB: atm. loop through all objects on s3 but next: only on new data
-    select_objects(objects)
     logging.info("Processing finished")
