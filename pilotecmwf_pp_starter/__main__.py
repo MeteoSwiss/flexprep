@@ -6,6 +6,7 @@ import os
 import tempfile
 from datetime import datetime
 from itertools import groupby
+from typing import Dict, List, Union
 
 # Third-party
 import boto3
@@ -20,6 +21,9 @@ from meteodatalab import config, data_source, grib_decoder, metadata
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
+S3Client = boto3.client
+FileObject = Dict[str, Union[str, int]]  # Define FileObject type
+
 # Configuration
 GB = 1024**3
 TRANSFER_CONFIG = TransferConfig(multipart_threshold=5 * GB)
@@ -31,7 +35,7 @@ TINCR = int(os.getenv("TINCR", 3))
 TSTART = int(os.getenv("TSTART", 0))
 
 
-def get_s3_client(endpoint_url, access_key, secret_key):
+def get_s3_client(endpoint_url: str, access_key: str, secret_key: str) -> S3Client:
     """Create and return an S3 client."""
     return boto3.client(
         "s3",
@@ -79,7 +83,7 @@ input_fields = {
 }
 
 
-def download_file(s3_client, bucket, key, local_path):
+def download_file(s3_client: S3Client, bucket: str, key: str, local_path: str) -> None:
     """Download a file from an S3 bucket to a local path."""
     try:
         s3_client.download_file(bucket, key, local_path, Config=TRANSFER_CONFIG)
@@ -88,7 +92,7 @@ def download_file(s3_client, bucket, key, local_path):
         logging.error(f"Error downloading file {key}: {e}")
 
 
-def upload_file(s3_client, bucket, local_path):
+def upload_file(s3_client: S3Client, bucket: str, local_path: str) -> None:
     """Upload a local file to an S3 bucket."""
     key = os.path.basename(local_path)
     try:
@@ -98,7 +102,13 @@ def upload_file(s3_client, bucket, local_path):
         logging.error(f"Error uploading file {local_path}: {e}")
 
 
-def validate_dataset(ds, params, ref_time, step, prev_step):
+def validate_dataset(
+    ds: Dict[str, np.ndarray],
+    params: List[str],
+    ref_time: datetime,
+    step: int,
+    prev_step: int,
+) -> None:
     """Validate the dataset to ensure it contains the required param and timesteps."""
     if not all(param in ds.keys() for param in params):
         raise ValueError("Not all requested parameters are present in the dataset")
@@ -119,7 +129,12 @@ def validate_dataset(ds, params, ref_time, step, prev_step):
         raise ValueError("The forecast reference time is incorrect")
 
 
-def process_fields(ds_out, ds_in, input_fields, constant_fields):
+def process_fields(
+    ds_out: Dict[str, np.ndarray],
+    ds_in: Dict[str, np.ndarray],
+    input_fields: set,
+    constant_fields: set,
+) -> None:
     """Process the fields from the input dataset and prepare the output dataset."""
     missing_fields = (ds_in.keys() & input_fields) - {"etadot"} - ds_out.keys()
 
@@ -138,7 +153,7 @@ def process_fields(ds_out, ds_in, input_fields, constant_fields):
     ds_out["lsp"] = ds_out["lsp"] * 100
 
 
-def pre_process(file_objs):
+def pre_process(file_objs: List[FileObject]) -> None:
     """Pre-process file objects by downloading, validating, and processing the data."""
 
     def download_temp_file(file_info):
