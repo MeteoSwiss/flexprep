@@ -4,14 +4,16 @@
 import logging
 import os
 import tempfile
+import typing
 from datetime import datetime
 from itertools import groupby
-from typing import Dict, List, Union
+from typing import Dict, List
 
 # Third-party
 import boto3
 import numpy as np
 from boto3.s3.transfer import TransferConfig
+from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
 # First-party
@@ -21,8 +23,7 @@ from meteodatalab import config, data_source, grib_decoder, metadata
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-S3Client = boto3.client
-FileObject = Dict[str, Union[str, int]]  # Define FileObject type
+FileObject = Dict[str, typing.Any]  # Define FileObject type
 
 # Configuration
 GB = 1024**3
@@ -35,7 +36,7 @@ TINCR = int(os.getenv("TINCR", 3))
 TSTART = int(os.getenv("TSTART", 0))
 
 
-def get_s3_client(endpoint_url: str, access_key: str, secret_key: str) -> S3Client:
+def get_s3_client(endpoint_url: str, access_key: str, secret_key: str) -> BaseClient:
     """Create and return an S3 client."""
     return boto3.client(
         "s3",
@@ -48,8 +49,8 @@ def get_s3_client(endpoint_url: str, access_key: str, secret_key: str) -> S3Clie
 
 s3_input = get_s3_client(
     S3INPUT_ENDPOINT_URL,
-    os.getenv("S3INPUT_ACCESS_KEY"),
-    os.getenv("S3INPUT_SECRET_KEY"),
+    os.getenv("S3INPUT_ACCESS_KEY", ""),
+    os.getenv("S3INPUT_SECRET_KEY", ""),
 )
 
 # NB: doesn't exist yet
@@ -83,7 +84,9 @@ input_fields = {
 }
 
 
-def download_file(s3_client: S3Client, bucket: str, key: str, local_path: str) -> None:
+def download_file(
+    s3_client: BaseClient, bucket: str, key: str, local_path: str
+) -> None:
     """Download a file from an S3 bucket to a local path."""
     try:
         s3_client.download_file(bucket, key, local_path, Config=TRANSFER_CONFIG)
@@ -92,7 +95,7 @@ def download_file(s3_client: S3Client, bucket: str, key: str, local_path: str) -
         logging.error(f"Error downloading file {key}: {e}")
 
 
-def upload_file(s3_client: S3Client, bucket: str, local_path: str) -> None:
+def upload_file(s3_client: BaseClient, bucket: str, local_path: str) -> None:
     """Upload a local file to an S3 bucket."""
     key = os.path.basename(local_path)
     try:
@@ -103,7 +106,7 @@ def upload_file(s3_client: S3Client, bucket: str, local_path: str) -> None:
 
 
 def validate_dataset(
-    ds: Dict[str, np.ndarray],
+    ds: Dict[str, typing.Any],
     params: List[str],
     ref_time: datetime,
     step: int,
@@ -130,8 +133,8 @@ def validate_dataset(
 
 
 def process_fields(
-    ds_out: Dict[str, np.ndarray],
-    ds_in: Dict[str, np.ndarray],
+    ds_out: Dict[str, typing.Any],
+    ds_in: Dict[str, typing.Any],
     input_fields: set,
     constant_fields: set,
 ) -> None:
@@ -156,11 +159,11 @@ def process_fields(
 def pre_process(file_objs: List[FileObject]) -> None:
     """Pre-process file objects by downloading, validating, and processing the data."""
 
-    def download_temp_file(file_info):
+    def download_temp_file(file_info: FileObject) -> str:
         temp_file = tempfile.NamedTemporaryFile(suffix=file_info["key"], delete=False)
         download_file(s3_input, S3INPUT_BUCKET_NAME, file_info["key"], temp_file.name)
         file_info["temp_file"] = temp_file.name
-        return temp_file
+        return temp_file.name
 
     file_objs.sort(key=lambda x: int(x["step"]), reverse=True)
     if len(file_objs) < 3:
@@ -187,11 +190,9 @@ def pre_process(file_objs: List[FileObject]) -> None:
     init_files.sort(key=lambda x: x["key"][-2:])
     temp_files.extend([download_temp_file(f) for f in init_files])
 
-    datafiles = [f.name for f in temp_files]
-
-    request = {"param": list(constants + input_fields)}
+    request = {"param": list(constants | input_fields)}
     with config.set_values(data_scope="ifs"):
-        source = data_source.DataSource(datafiles=datafiles)
+        source = data_source.DataSource(datafiles=temp_files)
         ds_in = grib_decoder.load(source, request)
         validate_dataset(
             ds_in, request["param"], forecast_ref_time, step_to_process, prev_step
@@ -202,7 +203,7 @@ def pre_process(file_objs: List[FileObject]) -> None:
     process_fields(ds_out, ds_in, input_fields, constants)
 
     for temp_file in temp_files:
-        os.unlink(temp_file.name)
+        os.unlink(temp_file)
 
     output_file = tempfile.NamedTemporaryFile(
         suffix=f"output_dispf{forecast_ref_time}_{step_to_process}", delete=False
