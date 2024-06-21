@@ -3,14 +3,6 @@ name = "meteoswiss"
 url = "https://hub.meteoswiss.ch/nexus/repository/python-all/simple"
 priority = "default"
 
-
-[tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
-isort = "^5.13.2"
-pre-commit = "^3.7.1"
-codespell = "^2.3.0"
-flake8 = "^7.1.0"
-
 [tool.black]
 line-length = 88
 target-version = ['py39']
@@ -43,6 +35,11 @@ urllib3 = ">=1.25.4,<1.27"
 meteodatalab = { url = "https://github.com/MeteoSwiss/meteodata-lab/archive/refs/heads/pydantic-v1-validator.zip" }
 
 [tool.poetry.dev-dependencies]
+black = "^24.4.2"
+isort = "^5.13.2"
+pre-commit = "^3.7.1"
+codespell = "^2.3.0"
+flake8 = "^7.1.0"
 pytest-cov = "*"
 pylint = "*"
 yapf = "*"
