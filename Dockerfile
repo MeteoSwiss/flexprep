@@ -16,11 +16,11 @@ RUN apt-get -yqq update && apt-get install -yqq wget libeccodes-dev
 RUN cd /src/app-root \
     && pip install -r requirements.txt
 
-COPY pilotecmwf_pp_starter /src/app-root/pilotecmwf_pp_starter
+COPY flexprep /src/app-root/flexprep
 
 WORKDIR /src/app-root
 
-CMD ["python", "-m", "pilotecmwf_pp_starter"]
+CMD ["python", "-m", "flexprep"]
 
 FROM base AS tester
 
@@ -49,4 +49,4 @@ ENV VERSION=$VERSION
 # uid 1001 is defined in the base-container-images for this purpose
 USER 1001
 
-CMD ["python", "-m", "pilotecmwf_pp_starter"]
+CMD ["python", "-m", "flexprep"]

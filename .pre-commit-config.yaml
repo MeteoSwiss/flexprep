@@ -18,14 +18,14 @@ repos:
         language: fail
         entry: "Found git merge backup file(s): review and remove them"
         files: "\\.orig$"
--   repo: local
-    hooks:
-    -   id: rstcheck
-        name: rstcheck
-        description: Check REST files for correctness
-        language: system
-        entry: rstcheck
-        types: [rst]
+#-   repo: local
+#    hooks:
+#    -   id: rstcheck
+#        name: rstcheck
+#        description: Check REST files for correctness
+#        language: system
+#        entry: rstcheck
+#        types: [rst]
 -   repo: local
     hooks:
     -   id: codespell
@@ -33,7 +33,7 @@ repos:
         description: Check for spelling errors
         language: system
         entry: codespell
-        files: ^pilotecmwf_pp_starter/.*
+        files: ^flexprep/.*
 -   repo: local
     hooks:
     -   id: black

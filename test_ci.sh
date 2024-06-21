@@ -1,17 +1,17 @@
 #!/bin/sh
 
 run_tests_with_coverage() {
-  python -m coverage run --source pilotecmwf_pp_starter --data-file test_reports/.coverage --module pytest --junitxml=test_reports/junit.xml test/
+  python -m coverage run --source flexprep --data-file test_reports/.coverage --module pytest --junitxml=test_reports/junit.xml test/
   python -m coverage xml --data-file test_reports/.coverage -o test_reports/coverage.xml
 }
 
 run_pylint() {
-  python -m pylint --output-format=parseable --exit-zero pilotecmwf_pp_starter | tee test_reports/pylint.log
+  python -m pylint --output-format=parseable --exit-zero flexprep | tee test_reports/pylint.log
 }
 
 
 run_mypy() {
-  mypy -p pilotecmwf_pp_starter | grep error | tee test_reports/mypy.log
+  mypy -p flexprep | grep error | tee test_reports/mypy.log
 }
 
 run_ci_tools() {

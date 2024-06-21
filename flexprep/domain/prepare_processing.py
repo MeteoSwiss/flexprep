@@ -2,8 +2,8 @@ import logging
 from datetime import datetime
 from itertools import groupby
 
-from pilotecmwf_pp_starter import CONFIG
-from pilotecmwf_pp_starter.domain.processing import Processing
+from flexprep import CONFIG
+from flexprep.domain.processing import Processing
 
 
 class PrepProcessing:

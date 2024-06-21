@@ -3,19 +3,9 @@ name = "meteoswiss"
 url = "https://hub.meteoswiss.ch/nexus/repository/python-all/simple"
 priority = "default"
 
-[tool.black]
-line-length = 88
-target-version = ['py39']
-
-[tool.flake8]
-max-line-length = 88
-
-[tool.isort]
-default_section = "THIRDPARTY"
-profile = "black"
 
 [tool.poetry]
-name = "pilotecmwf_pp_starter"
+name = "flexprep"
 version = "1.0.0"
 description = "processing"
 authors = ["Nina Burgdorfer <nina.burgdorfer@meteoswiss.ch>"]
@@ -48,6 +38,17 @@ sphinx = "*"
 importlib_resources = "*"
 pydata-sphinx-theme = "*"
 sphinx-autoapi = "*"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.flake8]
+max-line-length = 88
+
+[tool.isort]
+default_section = "THIRDPARTY"
+profile = "black"
 
 [tool.yapf]
 based_on_style = "pep8"

@@ -4,9 +4,9 @@ Services providing core functionality.
 
 import logging
 
-from pilotecmwf_pp_starter import CONFIG
-from pilotecmwf_pp_starter.domain.prepare_processing import PrepProcessing
-from pilotecmwf_pp_starter.domain.s3_utils import S3client
+from flexprep import CONFIG
+from flexprep.domain.prepare_processing import PrepProcessing
+from flexprep.domain.s3_utils import S3client
 
 logger = logging.getLogger(__name__)
 

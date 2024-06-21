@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pilotecmwf_pp_starter-settings
+  name: flexprep-settings
 data:
   logging_level: 'INFO'
   logging_formatter: 'json'

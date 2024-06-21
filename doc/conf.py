@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# pilotecmwf_pp_starter documentation build configuration file, created by
+# flexprep documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -52,7 +52,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "pilotecmwf_pp_starter"
+project = "flexprep"
 copyright = "2024, MeteoSwiss"
 author = "Nina Burgdorfer"
 
@@ -103,7 +103,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "pilotecmwf_pp_starter/doc"
+htmlhelp_basename = "flexprep/doc"
 
 # -- Options for LaTeX output ------------------------------------------
 
@@ -128,8 +128,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "pilotecmwf_pp_starter.tex",
-        "pilotecmwf_pp_starter Documentation",
+        "flexprep.tex",
+        "flexprep Documentation",
         "Nina Burgdorfer",
         "manual",
     ),
@@ -142,8 +142,8 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        "pilotecmwf_pp_starter",
-        "pilotecmwf_pp_starter Documentation",
+        "flexprep",
+        "flexprep Documentation",
         [author],
         1,
     )
@@ -157,10 +157,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "pilotecmwf_pp_starter",
-        "pilotecmwf_pp_starter Documentation",
+        "flexprep",
+        "flexprep Documentation",
         author,
-        "pilotecmwf_pp_starter",
+        "flexprep",
         "processing",
         "Miscellaneous",
     ),
@@ -173,7 +173,7 @@ napoleon_use_param = False
 add_module_names = False
 
 # autoapi module configuration
-autoapi_dirs = ["../pilotecmwf_pp_starter"]
+autoapi_dirs = ["../flexprep"]
 autoapi_options = [
     "members",
     "undoc-members",

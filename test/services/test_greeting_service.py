@@ -1,7 +1,7 @@
 # First-party
-from pilotecmwf_pp_starter import CONFIG
-from pilotecmwf_pp_starter.domain.greeting import Greeting
-from pilotecmwf_pp_starter.services import greeting_service
+from flexprep import CONFIG
+from flexprep.domain.greeting import Greeting
+from flexprep.services import greeting_service
 
 
 def test_greeting_service():

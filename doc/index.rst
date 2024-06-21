@@ -1,4 +1,4 @@
-pilotecmwf_pp_starter documentation
+flexprep documentation
 ================================================
 
 processing

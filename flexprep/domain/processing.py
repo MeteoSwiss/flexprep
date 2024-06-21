@@ -6,9 +6,9 @@ import typing
 import meteodatalab.operators.flexpart as flx
 from meteodatalab import config, data_source, grib_decoder, metadata
 
-from pilotecmwf_pp_starter.domain.flexpart_utils import prepare_output
-from pilotecmwf_pp_starter.domain.s3_utils import S3client
-from pilotecmwf_pp_starter.domain.validation_utils import validate_dataset
+from flexprep.domain.flexpart_utils import prepare_output
+from flexprep.domain.s3_utils import S3client
+from flexprep.domain.validation_utils import validate_dataset
 
 # Define constants and input fields for pre-flexpart
 constants = {"z", "lsm", "sdor"}

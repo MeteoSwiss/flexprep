@@ -8,7 +8,7 @@ from boto3.s3.transfer import TransferConfig
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
-from pilotecmwf_pp_starter import CONFIG
+from flexprep import CONFIG
 
 FileObject = dict[str, typing.Any]
 
