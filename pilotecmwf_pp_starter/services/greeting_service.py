@@ -2,10 +2,8 @@
 Services providing core functionality.
 """
 
-# Standard library
 import logging
 
-# First-party
 from pilotecmwf_pp_starter import CONFIG
 from pilotecmwf_pp_starter.domain.greeting import Greeting
 

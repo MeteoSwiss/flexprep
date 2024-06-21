@@ -1,12 +1,9 @@
 """ Initializations """
 
-# Standard library
 import os
 
-# Third-party
 from mch_python_commons.audit import logger
 
-# First-party
 from pilotecmwf_pp_starter.config.service_settings import ServiceSettings
 
 CONFIG = ServiceSettings(

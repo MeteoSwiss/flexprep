@@ -13,11 +13,6 @@ repos:
     -   id: trailing-whitespace
 -   repo: local
     hooks:
-    -   id: forbidden-files-copier-rej
-        name: find copier rejection files
-        language: fail
-        entry: "Found copier update rejection file(s): review and remove them"
-        files: "\\.rej$"
     -   id: forbidden-files-git-orig
         name: find git merge backup files
         language: fail

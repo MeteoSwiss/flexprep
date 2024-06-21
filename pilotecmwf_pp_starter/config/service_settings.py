@@ -1,4 +1,3 @@
-# Third-party
 from mch_python_commons.audit.logger import LoggingSettings
 from mch_python_commons.config.base_settings import BaseServiceSettings
 from pydantic import BaseModel

@@ -1,29 +1,24 @@
 """Pre-Process IFS HRES data as input to Flexpart."""
 
-# Standard library
 import logging
 import os
 import tempfile
 import typing
 from datetime import datetime
 from itertools import groupby
-from typing import Dict, List
 
-# Third-party
 import boto3
+import meteodatalab.operators.flexpart as flx
 import numpy as np
 from boto3.s3.transfer import TransferConfig
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
-
-# First-party
-import meteodatalab.operators.flexpart as flx
 from meteodatalab import config, data_source, grib_decoder, metadata
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-FileObject = Dict[str, typing.Any]  # Define FileObject type
+FileObject = dict[str, typing.Any]  # Define FileObject type
 
 # Configuration
 GB = 1024**3
@@ -106,8 +101,8 @@ def upload_file(s3_client: BaseClient, bucket: str, local_path: str) -> None:
 
 
 def validate_dataset(
-    ds: Dict[str, typing.Any],
-    params: List[str],
+    ds: dict[str, typing.Any],
+    params: list[str],
     ref_time: datetime,
     step: int,
     prev_step: int,
@@ -133,8 +128,8 @@ def validate_dataset(
 
 
 def process_fields(
-    ds_out: Dict[str, typing.Any],
-    ds_in: Dict[str, typing.Any],
+    ds_out: dict[str, typing.Any],
+    ds_in: dict[str, typing.Any],
     input_fields: set,
     constant_fields: set,
 ) -> None:
@@ -156,7 +151,7 @@ def process_fields(
     ds_out["lsp"] = ds_out["lsp"] * 100
 
 
-def pre_process(file_objs: List[FileObject]) -> None:
+def pre_process(file_objs: list[FileObject]) -> None:
     """Pre-process file objects by downloading, validating, and processing the data."""
 
     def download_temp_file(file_info: FileObject) -> str:
