@@ -6,4 +6,14 @@ logging:
   child_log_levels:
     mch_python_commons: DEBUG
 main:
-  app_name: pilotecmwf_pp_starter
+  app_name: FlexPrep
+  s3_buckets:
+    input:
+      endpoint_url: https://object-store.os-api.cci1.ecmwf.int
+      name: flexpart-input
+    output:
+      endpoint_url: ""
+      name: flexpart-output
+  time_settings:
+    tincr: 3
+    tstart: 0
