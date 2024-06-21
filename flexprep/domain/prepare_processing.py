@@ -20,8 +20,16 @@ class PrepProcessing:
 
             step = (
                 0
-                # there are two steps 0 (one const and one init data)
-                # condition below to differentiate them
+                # Filenamesfollow the pattern ccSMMDDHHIImmddhhiiE,
+                # where mmddhhii denotes the month, day, hour, and minute
+                #
+                # Example Filenames:
+                # - P1S06180000061800011: Stream S, variables at step = 0
+                # - P1D06180000061800001: Stream D, constants at step = 0
+                #
+                # In these filenames, the second-to-last digit indicates:
+                # - Minute = 1 for variables (stream S)
+                # - Minute = 0 for constants (stream D) at step = 0.
                 if valid_time_obj.minute == 1
                 else int((valid_time_obj - forecast_ref_time).total_seconds() / 3600)
             )
