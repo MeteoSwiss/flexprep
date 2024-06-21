@@ -80,4 +80,9 @@ class PrepProcessing:
                     )
                     if prev_file:
                         Processing().process(step_zero + [prev_file, file])
+                    else:
+                        msg = f"Cannot find file for previous step {prev_step}"
+                        logging.error(msg)
+                        raise ValueError(msg)
+
                 file["processed"] = "Y"
