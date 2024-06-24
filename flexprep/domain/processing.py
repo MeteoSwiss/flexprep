@@ -11,8 +11,8 @@ from flexprep.domain.s3_utils import S3client
 from flexprep.domain.validation_utils import validate_dataset
 
 # Define constants and input fields for pre-flexpart
-constants = {"z", "lsm", "sdor"}
-input_fields = {
+CONSTANTS = {"z", "lsm", "sdor"}
+INPUT_FIELDS = {
     "u",
     "v",
     "etadot",
@@ -68,7 +68,7 @@ class Processing:
         init_files.sort(key=lambda x: x["key"][-2:])
         temp_files.extend([self.s3_client.download_file(f) for f in init_files])
 
-        request = {"param": list(constants | input_fields)}
+        request = {"param": list(CONSTANTS | INPUT_FIELDS)}
         with config.set_values(data_scope="ifs"):
             source = data_source.DataSource(datafiles=temp_files)
             ds_in = grib_decoder.load(source, request)
@@ -78,7 +78,7 @@ class Processing:
             ds_in |= metadata.extract_pv(ds_in["u"].message)
 
         ds_out = flx.fflexpart(ds_in)
-        prepare_output(ds_out, ds_in, input_fields, constants)
+        prepare_output(ds_out, ds_in, INPUT_FIELDS, CONSTANTS)
 
         for temp_file in temp_files:
             os.unlink(temp_file)

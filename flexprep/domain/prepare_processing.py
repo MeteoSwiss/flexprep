@@ -20,7 +20,7 @@ class PrepProcessing:
 
             step = (
                 0
-                # Filenamesfollow the pattern ccSMMDDHHIImmddhhiiE,
+                # Filenames follow the pattern ccSMMDDHHIImmddhhiiE,
                 # where mmddhhii denotes the month, day, hour, and minute
                 #
                 # Example Filenames:

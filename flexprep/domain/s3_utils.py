@@ -27,6 +27,17 @@ class S3client:
         #    secret_key=os.getenv("S3OUTPUT_SECRET_KEY", ""),
         # )
 
+    def check_bucket(self, s3_client: BaseClient, bucket_name: str) -> None:
+        try:
+            s3_objects = s3_client.list_objects_v2(Bucket=bucket_name)
+            if "Contents" not in s3_objects:
+                logging.error(f"No objects found in bucket {bucket_name}")
+                raise ValueError(f"No objects found in bucket {bucket_name}")
+            logging.debug(f"The bucket {bucket_name} is not empty.")
+        except Exception as e:
+            logging.error(f"Error checking S3 bucket content: {e}")
+            raise e
+
     def _create_s3_client(
         self, endpoint_url: str, access_key: str, secret_key: str
     ) -> BaseClient:
@@ -58,7 +69,7 @@ class S3client:
             logging.error(
                 f"Error downloading file {file_info['key']} to temporary file: {e}"
             )
-            return None
+            raise e
 
     def upload_file(s3_client: BaseClient, bucket: str, local_path: str) -> None:
         """Upload a local file to an S3 bucket."""
