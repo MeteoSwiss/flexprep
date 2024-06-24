@@ -6,7 +6,7 @@ resources:
   - ../../base
 
 images:
-  - name: docker-all-nexus.meteoswiss.ch/flexpart_ifs/pilotecmwf_pp_starter
+  - name: docker-all-nexus.meteoswiss.ch/flexpart_ifs/flexprep
     newTag: flexpart_ifs-devt
 
 patchesStrategicMerge:

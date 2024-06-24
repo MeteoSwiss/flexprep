@@ -10,7 +10,7 @@ Install dependencies & start the service locally
 
 .. code-block:: console
 
-    $ cd pilotecmwf_pp_starter
+    $ cd flexprep
 
 2. Install packages
 
@@ -23,7 +23,7 @@ Install dependencies & start the service locally
 
 .. code-block:: console
 
-    $ poetry run python -m pilotecmwf_pp_starter
+    $ poetry run python -m flexprep
 
 -------------------------------
 Run the tests and quality tools
@@ -39,14 +39,14 @@ Run the tests and quality tools
 
 .. code-block:: console
 
-    $ poetry run pylint pilotecmwf_pp_starter
+    $ poetry run pylint flexprep
 
 
 3. Run mypy
 
 .. code-block:: console
 
-    $ poetry run mypy pilotecmwf_pp_starter
+    $ poetry run mypy flexprep
 
 
 ----------------------
@@ -57,7 +57,7 @@ Generate documentation
 
     $ poetry run sphinx-build doc doc/_build
 
-Then open the index.html file generated in *pilotecmwf_pp_starter/build/sphinx/html*
+Then open the index.html file generated in *flexprep/build/sphinx/html*
 
 
 .. HINT::

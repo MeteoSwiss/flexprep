@@ -1,8 +1,8 @@
 class Globals {
     // constants
-    static final String PROJECT = 'pilotecmwf_pp_starter'
+    static final String PROJECT = 'flexprep'
     static final String IMAGE_REPO = 'docker-intern-nexus.meteoswiss.ch'
-    static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/flexpart_ifs/pilotecmwf_pp_starter'
+    static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/flexpart_ifs/flexprep'
 
     // sets the pipeline to execute all steps related to building the service
     static boolean build = false
@@ -305,7 +305,7 @@ pipeline {
                         sh "oc login ${Globals.ocpHostName} --token $TOKEN"
                         sh "oc project ${Globals.cpProjectName}"
                         sh "kubectl apply -k k8s/overlays/${Globals.ocpEnv}"
-                        sh "kubectl rollout restart deployment/pilotecmwf_pp_starter"
+                        sh "kubectl rollout restart deployment/flexprep"
                     }
                 }
             }
@@ -326,7 +326,7 @@ pipeline {
                 withCredentials([string(credentialsId: "${Globals.cpProjectName}-token", variable: 'TOKEN')]) {
                     sh "oc login ${Globals.ocpHostName} --token \$TOKEN"
                     sh "oc project ${Globals.cpProjectName}"
-                    sh "kubectl rollout restart deployment/pilotecmwf_pp_starter"
+                    sh "kubectl rollout restart deployment/flexprep"
                 }
             }
             post {

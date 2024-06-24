@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = pilotecmwf_pp_starter
+SPHINXPROJ    = flexprep
 SOURCEDIR     = .
 BUILDDIR      = _build
 

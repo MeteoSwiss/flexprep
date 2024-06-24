@@ -1,0 +1,81 @@
+import logging
+import os
+import tempfile
+import typing
+
+import boto3
+from boto3.s3.transfer import TransferConfig
+from botocore.client import BaseClient
+from botocore.exceptions import ClientError
+
+from flexprep import CONFIG
+
+FileObject = dict[str, typing.Any]
+
+
+class S3client:
+    def __init__(self) -> None:
+        self.s3_client_input = self._create_s3_client(
+            endpoint_url=CONFIG.main.s3_buckets.input.endpoint_url,
+            access_key=os.getenv("S3INPUT_ACCESS_KEY", ""),
+            secret_key=os.getenv("S3INPUT_SECRET_KEY", ""),
+        )
+
+        # self.s3_client_output = self._create_s3_client(
+        #    endpoint_url=CONFIG.main.s3_buckets.output.name,
+        #    access_key=os.getenv("S3OUTPUT_ACCESS_KEY", ""),
+        #    secret_key=os.getenv("S3OUTPUT_SECRET_KEY", ""),
+        # )
+
+    def check_bucket(self, s3_client: BaseClient, bucket_name: str) -> None:
+        try:
+            s3_objects = s3_client.list_objects_v2(Bucket=bucket_name)
+            if "Contents" not in s3_objects:
+                logging.error(f"No objects found in bucket {bucket_name}")
+                raise ValueError(f"No objects found in bucket {bucket_name}")
+            logging.debug(f"The bucket {bucket_name} is not empty.")
+        except Exception as e:
+            logging.error(f"Error checking S3 bucket content: {e}")
+            raise e
+
+    def _create_s3_client(
+        self, endpoint_url: str, access_key: str, secret_key: str
+    ) -> BaseClient:
+        """Create and return an S3 client."""
+        return boto3.client(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            use_ssl=True,
+        )
+
+    def download_file(self, file_info: FileObject) -> str:
+        """Download a file from an S3 bucket to a temporary file."""
+        temp_file = tempfile.NamedTemporaryFile(suffix=file_info["key"], delete=False)
+        try:
+            self.s3_client_input.download_file(
+                CONFIG.main.s3_buckets.input.name,
+                file_info["key"],
+                temp_file.name,
+                Config=TransferConfig(multipart_threshold=5 * 1024**3),
+            )
+            logging.info(
+                f"Downloaded file from S3 to temporary file: {file_info['key']}"
+            )
+            file_info["temp_file"] = temp_file.name
+            return temp_file.name
+        except ClientError as e:
+            logging.error(
+                f"Error downloading file {file_info['key']} to temporary file: {e}"
+            )
+            raise e
+
+    def upload_file(s3_client: BaseClient, bucket: str, local_path: str) -> None:
+        """Upload a local file to an S3 bucket."""
+        key = os.path.basename(local_path)
+        try:
+            s3_client.upload_file(local_path, bucket, key)
+            logging.info(f"Uploaded file to S3: {key}")
+        except ClientError as e:
+            logging.error(f"Error uploading file {local_path}: {e}")

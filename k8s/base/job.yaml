@@ -1,25 +1,25 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pilotecmwf_pp_starter
+  name: flexprep
 spec:
   ttlSecondsAfterFinished: 1800
   template:
     spec:
       containers:
-        - name: pilotecmwf_pp_starter
-          image: docker-all-nexus.meteoswiss.ch/flexpart_ifs/pilotecmwf_pp_starter
+        - name: flexprep
+          image: docker-all-nexus.meteoswiss.ch/flexpart_ifs/flexprep
           imagePullPolicy: Always
           env:
             - name: LOGGING__ROOT_LOG_LEVEL
               valueFrom:
                 configMapKeyRef:
-                  name: pilotecmwf_pp_starter-settings
+                  name: flexprep-settings
                   key: logging_level
             - name: LOGGING__FORMATTER
               valueFrom:
                 configMapKeyRef:
-                  name: pilotecmwf_pp_starter-settings
+                  name: flexprep-settings
                   key: logging_formatter
           resources:
             limits:
