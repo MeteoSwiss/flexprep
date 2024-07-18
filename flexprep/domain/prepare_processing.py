@@ -80,7 +80,7 @@ class PrepProcessing:
 
                 logging.info(f"Launching Pre-Processing for timestep {step}")
                 if prev_step == 0:
-                    Processing().process(step_zero + [file])
+                    Processing().process(step_zero + [file.copy()])
                 else:
                     prev_file = next(
                         (item for item in files_per_run if item["step"] == prev_step),
@@ -92,5 +92,4 @@ class PrepProcessing:
                         msg = f"Cannot find file for previous step {prev_step}"
                         logging.error(msg)
                         raise ValueError(msg)
-
                 file["processed"] = "Y"
