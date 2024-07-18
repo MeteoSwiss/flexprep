@@ -1,9 +1,11 @@
 import unittest
 from datetime import datetime
+
 import numpy as np
 import xarray as xr
 
-from flexprep.domain.validation_utils import validate_dataset  # Replace 'your_module' with the actual module name
+from flexprep.domain.validation_utils import validate_dataset
+
 
 class TestValidateDataset(unittest.TestCase):
 
@@ -18,12 +20,18 @@ class TestValidateDataset(unittest.TestCase):
             "temperature": xr.DataArray(
                 np.random.rand(3),
                 dims=["time"],
-                coords={"time": [0, 3, 6], "ref_time": np.datetime64(self.ref_time, "ns")},
+                coords={
+                    "time": [0, 3, 6],
+                    "ref_time": np.datetime64(self.ref_time, "ns"),
+                },
             ),
             "pressure": xr.DataArray(
                 np.random.rand(3),
                 dims=["time"],
-                coords={"time": [0, 3, 6], "ref_time": np.datetime64(self.ref_time, "ns")},
+                coords={
+                    "time": [0, 3, 6],
+                    "ref_time": np.datetime64(self.ref_time, "ns"),
+                },
             ),
         }
 
@@ -37,8 +45,13 @@ class TestValidateDataset(unittest.TestCase):
         del ds_incomplete["pressure"]
 
         with self.assertRaises(ValueError) as context:
-            validate_dataset(ds_incomplete, self.params, self.ref_time, self.step, self.prev_step)
-        self.assertEqual(str(context.exception), "Not all requested parameters are present in the dataset")
+            validate_dataset(
+                ds_incomplete, self.params, self.ref_time, self.step, self.prev_step
+            )
+        self.assertEqual(
+            str(context.exception),
+            "Not all requested parameters are present in the dataset",
+        )
 
     def test_incorrect_time_steps(self):
         # Modify time steps to be incorrect
@@ -50,7 +63,9 @@ class TestValidateDataset(unittest.TestCase):
         )
 
         with self.assertRaises(ValueError) as context:
-            validate_dataset(ds_incorrect_time, self.params, self.ref_time, self.step, self.prev_step)
+            validate_dataset(
+                ds_incorrect_time, self.params, self.ref_time, self.step, self.prev_step
+            )
         self.assertEqual(str(context.exception), "Downloaded steps are incorrect")
 
     def test_incorrect_ref_time(self):
@@ -59,10 +74,20 @@ class TestValidateDataset(unittest.TestCase):
         ds_incorrect_ref_time["temperature"] = xr.DataArray(
             np.random.rand(3),
             dims=["time"],
-            coords={"time": [0, 3, 6], "ref_time": np.datetime64(datetime(2023, 1, 1), "ns")},
+            coords={
+                "time": [0, 3, 6],
+                "ref_time": np.datetime64(datetime(2023, 1, 1), "ns"),
+            },
         )
 
         with self.assertRaises(ValueError) as context:
-            validate_dataset(ds_incorrect_ref_time, self.params, self.ref_time, self.step, self.prev_step)
-        self.assertEqual(str(context.exception), "The forecast reference time is incorrect")
-
+            validate_dataset(
+                ds_incorrect_ref_time,
+                self.params,
+                self.ref_time,
+                self.step,
+                self.prev_step,
+            )
+        self.assertEqual(
+            str(context.exception), "The forecast reference time is incorrect"
+        )
