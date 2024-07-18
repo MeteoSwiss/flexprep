@@ -58,7 +58,6 @@ class TestLaunchPreProcessing(unittest.TestCase):
             ]
         }
 
-        # Call the method to be tested
         obj.launch_pre_processing(objects)
 
         # Verify that the process method was called the expected number of times
