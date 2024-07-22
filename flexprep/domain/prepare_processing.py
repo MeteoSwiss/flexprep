@@ -46,7 +46,7 @@ class PrepProcessing:
 
     def launch_pre_processing(self, objects):
         obj_in_s3 = self.aggregate_s3_objects(objects)
-        for fcst_ref_time, group in groupby(
+        for _, group in groupby(
             sorted(obj_in_s3, key=lambda x: x["step"]),
             key=lambda x: x["forecast_ref_time"]
         ):
