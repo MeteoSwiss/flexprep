@@ -5,6 +5,7 @@ from itertools import groupby
 from flexprep import CONFIG
 from flexprep.domain.processing import Processing
 
+
 def aggregate_s3_objects(objects):
     obj_in_s3 = []
 
@@ -40,6 +41,7 @@ def aggregate_s3_objects(objects):
         )
     obj_in_s3.sort(key=lambda x: x["forecast_ref_time"])
     return obj_in_s3
+
 
 def launch_pre_processing(objects):
     obj_in_s3 = aggregate_s3_objects(objects)
