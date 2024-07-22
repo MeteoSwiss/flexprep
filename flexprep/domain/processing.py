@@ -2,7 +2,6 @@ import logging
 import os
 import tempfile
 import typing
-from typing import Optional
 
 import meteodatalab.operators.flexpart as flx
 from meteodatalab import config, data_source, grib_decoder, metadata
@@ -60,7 +59,7 @@ class Processing:
 
     def _sort_and_download_files(
         self, file_objs: list[FileObject]
-    ) -> Optional[tuple[list[str], FileObject, FileObject]]:
+    ) -> tuple[list[str], FileObject, FileObject] | None:
         """Sort file objects, validate, and select files for processing."""
         try:
             sorted_files = sorted(file_objs, key=lambda x: int(x["step"]), reverse=True)
@@ -92,7 +91,7 @@ class Processing:
             return temp_files
         except Exception as e:
             logging.error(f"File download failed: {e}")
-            return []
+            raise RuntimeError("An error occurred while downloading files.") from e
 
     def _load_and_validate_data(
         self, temp_files: list[str], to_process: FileObject, prev_file: FileObject

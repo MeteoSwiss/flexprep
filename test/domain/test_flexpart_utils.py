@@ -9,7 +9,7 @@ from flexprep.domain.processing import CONSTANTS, INPUT_FIELDS
 def setup_data():
     ds_out = {field: MagicMock() for field in INPUT_FIELDS}
     ds_out["omega"] = MagicMock()
-    ds_in = {field: MagicMock() for field in list(CONSTANTS | INPUT_FIELDS)}
+    ds_in = {field: MagicMock() for field in CONSTANTS | INPUT_FIELDS}
     return ds_out, ds_in
 
 def test_prepare_output_missing_fields(setup_data):

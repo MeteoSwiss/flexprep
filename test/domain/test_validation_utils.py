@@ -43,30 +43,27 @@ def test_valid_dataset(setup_data):
 def test_missing_param(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
     # Remove one parameter from the dataset
-    ds_incomplete = ds.copy()
-    del ds_incomplete["pressure"]
+    del ds["pressure"]
 
     with pytest.raises(ValueError, match="Not all requested parameters are present in the dataset"):
-        validate_dataset(ds_incomplete, params, ref_time, step, prev_step)
+        validate_dataset(ds, params, ref_time, step, prev_step)
 
 def test_incorrect_time_steps(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
     # Modify time steps to be incorrect
-    ds_incorrect_time = ds.copy()
-    ds_incorrect_time["temperature"] = xr.DataArray(
+    ds["temperature"] = xr.DataArray(
         np.random.rand(2),
         dims=["time"],
         coords={"time": [0, 7], "ref_time": np.datetime64(ref_time, "ns")},
     )
 
     with pytest.raises(ValueError, match="Downloaded steps are incorrect"):
-        validate_dataset(ds_incorrect_time, params, ref_time, step, prev_step)
+        validate_dataset(ds, params, ref_time, step, prev_step)
 
 def test_incorrect_ref_time(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
     # Modify ref_time to be incorrect
-    ds_incorrect_ref_time = ds.copy()
-    ds_incorrect_ref_time["temperature"] = xr.DataArray(
+    ds["temperature"] = xr.DataArray(
         np.random.rand(3),
         dims=["time"],
         coords={
@@ -76,4 +73,4 @@ def test_incorrect_ref_time(setup_data):
     )
 
     with pytest.raises(ValueError, match="The forecast reference time is incorrect"):
-        validate_dataset(ds_incorrect_ref_time, params, ref_time, step, prev_step)
+        validate_dataset(ds, params, ref_time, step, prev_step)
