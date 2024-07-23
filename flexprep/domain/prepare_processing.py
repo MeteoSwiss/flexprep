@@ -79,14 +79,14 @@ def launch_pre_processing(objects):
 
             logging.info(f"Launching Pre-Processing for timestep {step}")
             if prev_step == 0:
-                Processing().process(step_zero + [file])
+                Processing().process(step_zero + [file.copy()])
             else:
                 prev_file = next(
                     (item for item in files_per_run if item["step"] == prev_step),
                     None,
                 )
                 if prev_file:
-                    Processing().process(step_zero + [prev_file, file])
+                    Processing().process(step_zero + [prev_file, file.copy()])
                 else:
                     msg = f"Cannot find file for previous step {prev_step}"
                     logging.error(msg)
