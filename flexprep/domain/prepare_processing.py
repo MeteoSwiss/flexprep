@@ -46,8 +46,9 @@ class PrepProcessing:
 
     def launch_pre_processing(self, objects):
         obj_in_s3 = self.aggregate_s3_objects(objects)
-        for fcst_ref_time, group in groupby(
-            obj_in_s3, key=lambda x: x["forecast_ref_time"]
+        for _, group in groupby(
+            sorted(obj_in_s3, key=lambda x: x["step"]),
+            key=lambda x: x["forecast_ref_time"]
         ):
             files_per_run = list(group)
             step_zero = [file for file in files_per_run if file["step"] == 0]
@@ -80,17 +81,16 @@ class PrepProcessing:
 
                 logging.info(f"Launching Pre-Processing for timestep {step}")
                 if prev_step == 0:
-                    Processing().process(step_zero + [file])
+                    Processing().process(step_zero + [file.copy()])
                 else:
                     prev_file = next(
                         (item for item in files_per_run if item["step"] == prev_step),
                         None,
                     )
                     if prev_file:
-                        Processing().process(step_zero + [prev_file, file])
+                        Processing().process(step_zero + [prev_file, file.copy()])
                     else:
                         msg = f"Cannot find file for previous step {prev_step}"
                         logging.error(msg)
                         raise ValueError(msg)
-
                 file["processed"] = "Y"
