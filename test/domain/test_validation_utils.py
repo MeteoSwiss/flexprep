@@ -1,7 +1,7 @@
-import pytest
 from datetime import datetime
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from flexprep.domain.validation_utils import validate_dataset
@@ -35,18 +35,23 @@ def setup_data():
     }
     return ds, params, ref_time, step, prev_step
 
+
 def test_valid_dataset(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
     # This should not raise any exceptions
     validate_dataset(ds, params, ref_time, step, prev_step)
+
 
 def test_missing_param(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
     # Remove one parameter from the dataset
     del ds["pressure"]
 
-    with pytest.raises(ValueError, match="Not all requested parameters are present in the dataset"):
+    with pytest.raises(
+        ValueError, match="Not all requested parameters are present in the dataset"
+    ):
         validate_dataset(ds, params, ref_time, step, prev_step)
+
 
 def test_incorrect_time_steps(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
@@ -59,6 +64,7 @@ def test_incorrect_time_steps(setup_data):
 
     with pytest.raises(ValueError, match="Downloaded steps are incorrect"):
         validate_dataset(ds, params, ref_time, step, prev_step)
+
 
 def test_incorrect_ref_time(setup_data):
     ds, params, ref_time, step, prev_step = setup_data
