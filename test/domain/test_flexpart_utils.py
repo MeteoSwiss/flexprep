@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from flexprep.domain.flexpart_utils import prepare_output
 from flexprep.domain.processing import CONSTANTS, INPUT_FIELDS
@@ -11,6 +12,7 @@ def setup_data():
     ds_out["omega"] = MagicMock()
     ds_in = {field: MagicMock() for field in CONSTANTS | INPUT_FIELDS}
     return ds_out, ds_in
+
 
 def test_prepare_output_missing_fields(setup_data):
     ds_out, ds_in = setup_data

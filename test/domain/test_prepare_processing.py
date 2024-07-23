@@ -1,7 +1,10 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from flexprep.domain.prepare_processing import PrepProcessing
+from flexprep.domain.prepare_processing import (
+    aggregate_s3_objects,
+    launch_pre_processing,
+)
 
 
 def test_aggregate_s3_objects():
@@ -14,8 +17,7 @@ def test_aggregate_s3_objects():
         ]
     }
 
-    prep_processing = PrepProcessing()
-    result = prep_processing.aggregate_s3_objects(objects)
+    result = aggregate_s3_objects(objects)
 
     expected_result = [
         {
@@ -40,12 +42,11 @@ def test_aggregate_s3_objects():
 
     assert result == expected_result
 
+
 @patch("flexprep.domain.prepare_processing.Processing")
 def test_launch_pre_processing(MockProcessing):
     mock_processing_instance = MockProcessing.return_value
     mock_processing_instance.process = MagicMock()
-
-    obj = PrepProcessing()
 
     objects = {
         "Contents": [
@@ -55,7 +56,7 @@ def test_launch_pre_processing(MockProcessing):
         ]
     }
 
-    obj.launch_pre_processing(objects)
+    launch_pre_processing(objects)
 
     # Verify that the process method was called the expected number of times
     assert mock_processing_instance.process.call_count == 1

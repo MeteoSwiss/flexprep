@@ -2,6 +2,7 @@ import logging
 from io import StringIO
 
 import pytest
+
 from flexprep.domain.processing import Processing
 
 
@@ -15,6 +16,7 @@ def log_capture():
     logger.addHandler(log_handler)
     yield log_capture
     logger.removeHandler(log_handler)
+
 
 def test_sorted_files_length_less_than_3(log_capture):
 
@@ -32,4 +34,7 @@ def test_sorted_files_length_less_than_3(log_capture):
     log_contents = log_capture.getvalue().strip()
 
     # Verify the logged message
-    assert "Sorting and validation failed: Not enough files for pre-processing" in log_contents
+    assert (
+        "Sorting and validation failed: Not enough files for pre-processing"
+        in log_contents
+    )

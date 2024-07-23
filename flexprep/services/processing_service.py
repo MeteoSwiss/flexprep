@@ -5,7 +5,7 @@ Services providing core functionality.
 import logging
 
 from flexprep import CONFIG
-from flexprep.domain.prepare_processing import PrepProcessing
+from flexprep.domain.prepare_processing import launch_pre_processing
 from flexprep.domain.s3_utils import S3client
 
 logger = logging.getLogger(__name__)
@@ -21,4 +21,4 @@ def process():
 
     s3_objects = s3_input.list_objects_v2(Bucket=bucket_name)
 
-    PrepProcessing().launch_pre_processing(s3_objects)
+    launch_pre_processing(s3_objects)

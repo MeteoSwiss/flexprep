@@ -22,9 +22,8 @@ numpy = "^1.26.4"
 xarray = ">=2023.4.1"
 eccodes = "~1.5"
 urllib3 = ">=1.25.4,<1.27"
-meteodatalab = { url = "https://github.com/MeteoSwiss/meteodata-lab/archive/main.zip" }
+meteodatalab = { url = "https://github.com/MeteoSwiss/meteodata-lab/archive/refs/heads/main.zip" }
 pyfdb = { url = "https://github.com/ecmwf/pyfdb/archive/refs/tags/0.0.3.zip" }
-moto = "^5.0.11"
 
 
 
