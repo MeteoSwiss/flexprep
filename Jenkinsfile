@@ -1,8 +1,10 @@
 class Globals {
     // constants
     static final String PROJECT = 'flexprep'
-    static final String IMAGE_REPO = 'docker-intern-nexus.meteoswiss.ch'
-    static final String IMAGE_NAME = 'docker-intern-nexus.meteoswiss.ch/flexpart_ifs/flexprep'
+    static final String IMAGE_REPO_INTERN = 'docker-intern-nexus.meteoswiss.ch'
+    static final String IMAGE_REPO_PUBLIC = 'docker-public-nexus.meteoswiss.ch'
+    static final String IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/flexpart_ifs/flexprep'
+    static final String IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/flexpart_ifs/flexprep'
 
     // sets the pipeline to execute all steps related to building the service
     static boolean build = false
@@ -35,7 +37,8 @@ class Globals {
     static String ocpHostName = ''
 
     // the image tag used for tagging the image
-    static String imageTag = ''
+    static String imageTagIntern = ''
+    static String imageTagPublic = ''
 
     // the service version
     static String version = ''
@@ -126,11 +129,13 @@ pipeline {
                         }
                         echo "Using version ${Globals.version}"
                         if (env.BRANCH_NAME == 'main') {
-                            Globals.imageTag = "${Globals.IMAGE_NAME}:latest"
+                            Globals.imageTagIntern = "${Globals.IMAGE_NAME_INTERN}:latest"
+                            Globals.imageTagPublic = "${Globals.IMAGE_NAME_PUBLIC}:latest"
                         } else {
-                            Globals.imageTag = "${Globals.IMAGE_NAME}:${shortBranchName}"
+                            Globals.imageTagIntern = "${Globals.IMAGE_NAME_INTERN}:${shortBranchName}"
+                            Globals.imageTagPublic = "${Globals.IMAGE_NAME_PUBLIC}:${shortBranchName}"
                         }
-                        echo "Using container version ${Globals.imageTag}"
+                        echo "Using container version ${Globals.imageTagIntern} and ${Globals.imageTagPublic}"
                     }
                 }
             }
@@ -142,11 +147,11 @@ pipeline {
             steps {
                 echo "Starting with Build image"
                 sh """
-                podman build --pull --build-arg VERSION=${Globals.version} --target tester -t ${Globals.imageTag}-tester .
+                podman build --pull --build-arg VERSION=${Globals.version} --target tester -t ${Globals.imageTagIntern}-tester .
                 mkdir -p test_reports
                 """
                 echo "Starting with unit-testing including coverage"
-                sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTag}-tester sh -c '. ./test_ci.sh && run_tests_with_coverage'"
+                sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_tests_with_coverage'"
 
             }
             post {
@@ -162,11 +167,11 @@ pipeline {
             steps {
                 script {
                     echo("---- LYNT ----")
-                    sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTag}-tester sh -c '. ./test_ci.sh && run_pylint'"
+                    sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_pylint'"
 
                     try {
                         echo("---- TYPING CHECK ----")
-                        sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTag}-tester sh -c '. ./test_ci.sh && run_mypy'"
+                        sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_mypy'"
                         recordIssues(qualityGates: [[threshold: 10, type: 'TOTAL', unstable: false]], tools: [myPy(pattern: 'test_reports/mypy.log')])
                     }
                     catch (err) {
@@ -198,16 +203,19 @@ pipeline {
                 script {
                     if (expression { Globals.build || Globals.deploy }) {
                         echo "---- CREATE IMAGE ----"
-                        sh "podman build --pull --target runner --build-arg VERSION=${Globals.version} -t ${Globals.imageTag} ."
+                        sh """
+                        podman build --pull --target runner --build-arg VERSION=${Globals.version} -t ${Globals.imageTagIntern} .
+                        podman tag ${Globals.imageTagIntern} ${Globals.imageTagPublic}
+                        """
                     }
                 }
                 script {
                     if (params.PUBLISH_DOCUMENTATION) {
                         echo "---- CREATE DOCUMENTATION ----"
                         sh """
-                        podman build --pull --build-arg VERSION=${Globals.version} --target documenter -t ${Globals.imageTag}-documenter .
+                        podman build --pull --build-arg VERSION=${Globals.version} --target documenter -t ${Globals.imageTagIntern}-documenter .
                         mkdir -p doc/_build
-                        podman run -v \$(pwd)/doc/_build:/src/app-root/doc/_build --rm ${Globals.imageTag}-documenter
+                        podman run -v \$(pwd)/doc/_build:/src/app-root/doc/_build --rm ${Globals.imageTagIntern}-documenter
                         """
                     }
                 }
@@ -227,9 +235,12 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
                             passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
                             sh """
-                            echo $NXPASS | podman login ${Globals.IMAGE_REPO} -u $NXUSER --password-stdin
-                            podman push ${Globals.imageTag}
+                            echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
+                            echo $NXPASS | podman login ${Globals.IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin
+                            podman push ${Globals.imageTagIntern}
                             """
+                            if (env.BRANCH_NAME == 'main'){
+                                sh "podman push ${Globals.imageTagPublic}"
                         }
                     }
                 }
@@ -247,7 +258,8 @@ pipeline {
             }
             post {
                 cleanup {
-                    sh "podman logout ${Globals.IMAGE_REPO} || true"
+                    sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
+                    sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
                     sh 'oc logout || true'
                 }
             }
@@ -266,13 +278,13 @@ pipeline {
                 echo "---- TRIVY SCAN ----"
                 withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
                     passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
-                    sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO} -u $NXUSER --password-stdin"
-                    runDevScript("test/trivyscanner.py ${Globals.imageTag}")
+                    sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin"
+                    runDevScript("test/trivyscanner.py ${Globals.imageTagIntern}")
                 }
             }
             post {
                 cleanup {
-                    sh "podman logout ${Globals.IMAGE_REPO} || true"
+                    sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
                 }
             }
         }
@@ -295,9 +307,9 @@ pipeline {
                         passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
                         echo 'Push to image registry'
                         sh """
-                           echo $NXPASS | podman login ${Globals.IMAGE_REPO} -u $NXUSER --password-stdin
-                           podman tag ${Globals.imageTag} ${Globals.IMAGE_NAME}:${Globals.ocpEnv}
-                           podman push ${Globals.IMAGE_NAME}:${Globals.ocpEnv}
+                           echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
+                           podman tag ${Globals.imageTagIntern} ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv}
+                           podman push ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv}
                         """
                     }
 
@@ -311,7 +323,7 @@ pipeline {
             }
             post {
                 cleanup {
-                    sh "podman logout ${Globals.IMAGE_REPO} || true"
+                    sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
                     sh "oc logout || true"
                 }
             }
@@ -363,10 +375,11 @@ pipeline {
 
     post {
         cleanup {
-            sh "podman image rm -f ${Globals.imageTag}-documenter || true"
-            sh "podman image rm -f ${Globals.imageTag}-tester || true"
-            sh "podman image rm -f ${Globals.imageTag} || true"
-            sh "podman image rm -f ${Globals.IMAGE_NAME}:${Globals.ocpEnv} || true"
+            sh "podman image rm -f ${Globals.imageTagIntern}-documenter || true"
+            sh "podman image rm -f ${Globals.imageTagIntern}-tester || true"
+            sh "podman image rm -f ${Globals.imageTagIntern} || true"
+            sh "podman image rm -f ${Globals.imageTagPublic} || true"
+            sh "podman image rm -f ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv} || true"
         }
         aborted {
             updateGitlabCommitStatus name: 'Build', state: 'canceled'
