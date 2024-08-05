@@ -241,7 +241,8 @@ pipeline {
                             """
                             if (env.BRANCH_NAME == 'main'){
                                 sh "podman push ${Globals.imageTagPublic}"
-                        }
+                            }
+                        }  
                     }
                 }
                 script {
