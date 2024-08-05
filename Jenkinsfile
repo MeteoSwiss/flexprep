@@ -261,11 +261,13 @@ pipeline {
             }
             post {
                 cleanup {
-                    sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
-                    if (env.BRANCH_NAME == 'main'){
-                        sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
-                    }
-                    sh 'oc logout || true'
+                    script {  
+                        sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
+                        if (env.BRANCH_NAME == 'main'){
+                            sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
+                        }
+                        sh 'oc logout || true'
+                    } 
                 }
             }
         }
@@ -280,23 +282,27 @@ pipeline {
                 HTTPS_PROXY = "http://proxy.meteoswiss.ch:8080"
             }
             steps {
-                echo "---- TRIVY SCAN ----"
-                withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
-                    passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
-                    sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin"
-                    runDevScript("test/trivyscanner.py ${Globals.imageTagIntern}")
-                    if (env.BRANCH_NAME == 'main'){
-                        sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin"
-                        runDevScript("test/trivyscanner.py ${Globals.imageTagPublic}")
+                script { 
+                    echo "---- TRIVY SCAN ----"
+                    withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
+                        passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
+                        sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin"
+                        runDevScript("test/trivyscanner.py ${Globals.imageTagIntern}")
+                        if (env.BRANCH_NAME == 'main'){
+                            sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin"
+                            runDevScript("test/trivyscanner.py ${Globals.imageTagPublic}")
+                        }
                     }
-                }
+                } 
             }
             post {
                 cleanup {
-                    sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
-                    if (env.BRANCH_NAME == 'main'){
-                        sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
-                    }
+                    script { 
+                        sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
+                        if (env.BRANCH_NAME == 'main'){
+                            sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
+                        }
+                    } 
                 }
             }
         }
