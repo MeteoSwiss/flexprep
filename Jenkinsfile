@@ -229,7 +229,6 @@ pipeline {
         stage('Publish Artifacts') {
             when { expression { Globals.deploy || params.PUBLISH_DOCUMENTATION } }
             environment {
-                REGISTRY_AUTH_FILE = "$workspace/.containers/auth.json"
                 PATH = "$HOME/tools/openshift-client-tools:$PATH"
             }
             steps {
@@ -300,7 +299,6 @@ pipeline {
         stage('Scan Artifacts') {
             when { expression { Globals.runTrivyScan } }
             environment {
-                REGISTRY_AUTH_FILE = "$workspace/.containers/auth.json"
                 PATH = "$HOME/tools/openshift-client-tools:$HOME/tools/trivy:$PATH"
                 HTTP_PROXY = "http://proxy.meteoswiss.ch:8080"
                 HTTPS_PROXY = "http://proxy.meteoswiss.ch:8080"
@@ -334,7 +332,6 @@ pipeline {
         stage('Deploy') {
             when { expression { Globals.deploy } }
             environment {
-                REGISTRY_AUTH_FILE = "$workspace/.containers/auth.json"
                 PATH = "$HOME/tools/openshift-client-tools:$PATH"
             }
             steps {
