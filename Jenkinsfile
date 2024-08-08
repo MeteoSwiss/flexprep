@@ -350,8 +350,8 @@ pipeline {
                         echo 'Push to image registry'
                         sh """
                            echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
-                           podman tag ${Globals.imageTagIntern} ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv}
-                           podman push ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv}
+                           podman tag ${Globals.imageTagIntern} ${Globals.NEXUS_IMAGE_NAME_INTERN}:${Globals.ocpEnv}
+                           podman push ${Globals.NEXUS_IMAGE_NAME_INTERN}:${Globals.ocpEnv}
                         """
                     }
 
@@ -422,7 +422,7 @@ pipeline {
             sh "podman image rm -f ${Globals.imageTagIntern} || true"
             sh "podman image rm -f ${Globals.imageTagPublic} || true"
             sh "podman image rm -f ${Globals.imageTagECR} || true"
-            sh "podman image rm -f ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv} || true"
+            sh "podman image rm -f ${Globals.NEXUS_IMAGE_NAME_INTERN}:${Globals.ocpEnv} || true"
         }
         aborted {
             updateGitlabCommitStatus name: 'Build', state: 'canceled'
