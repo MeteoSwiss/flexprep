@@ -47,8 +47,6 @@ class Globals {
     // the service version
     static String version = ''
 
-    // the image tag
-    static String TAG = ''
 }
 
 
@@ -69,6 +67,7 @@ pipeline {
 
         string(name: 'version', description: 'The release version, must follow semantic versioning (e.g. v1.0.0)')
         booleanParam(name: 'PUBLISH_DOCUMENTATION', defaultValue: false, description: 'Publishes the generated documentation')
+        booleanParam(name: 'PUSH_IMAGES_TO_ECR', defaultValue: false, description: 'Push images to ECR?')
     }
 
     options {
@@ -81,14 +80,11 @@ pipeline {
         gitLabConnection('CollabGitLab')
     }
 
-    parameters {
-        booleanParam(name: 'PUSH_IMAGES_TO_ECR', defaultValue: false, description: 'Push images to ECR?')
-    }
     environment {
         KUBECONFIG = "$workspace/.kube/config"
         scannerHome = tool name: 'Sonarqube-certs-PROD', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
         PATH = "/opt/maker/tools/aws:$PATH"
-        Globals.TAG = "${sh(script: "echo `date +%g%m.$GIT_COMMIT`", returnStdout: true).trim()}"
+        TAG = "${sh(script: "echo `date +%g%m.$GIT_COMMIT`", returnStdout: true).trim()}"
     }
 
     stages {
@@ -276,7 +272,7 @@ pipeline {
                             aws ecr get-login-password --region eu-central-2 | podman login --username AWS --password-stdin --cert-dir /etc/ssl/certs ${ECR_REPO}
 
                             podman push --cert-dir /etc/ssl/certs ${Globals.imageTagECR}
-                            aws ssm put-parameter --name "/flexpart_ifs/flexprep/containertag" --type "String" --value "${Globals.TAG}" --overwrite --region eu-central-2
+                            aws ssm put-parameter --name "/flexpart_ifs/flexprep/containertag" --type "String" --value "${TAG}" --overwrite --region eu-central-2
 
                             """
                             }
