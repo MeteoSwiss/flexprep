@@ -11,7 +11,7 @@ from flexprep.domain.s3_utils import S3client
 logger = logging.getLogger(__name__)
 
 
-def process():
+def process() -> None:
     logger.debug("Initialize Processing")
 
     s3_input = S3client().s3_client_input

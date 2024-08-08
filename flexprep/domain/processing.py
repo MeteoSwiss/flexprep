@@ -99,7 +99,7 @@ class Processing:
         """Load and validate data from downloaded files."""
         request = {"param": list(CONSTANTS | INPUT_FIELDS)}
         with config.set_values(data_scope="ifs"):
-            source = data_source.DataSource(datafiles=temp_files)
+            source = data_source.FileDataSource(datafiles=temp_files)
             ds_in = grib_decoder.load(source, request)
             validate_dataset(
                 ds_in,
@@ -121,7 +121,7 @@ class Processing:
 
     def _save_output(
         self, ds_out: typing.Any, forecast_ref_time: str, step_to_process: int
-    ):
+    ) -> None:
         """Save processed data to a temporary file."""
         output_file = tempfile.NamedTemporaryFile(
             suffix=f"output_dispf{forecast_ref_time}_{step_to_process}", delete=False

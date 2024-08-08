@@ -1,10 +1,13 @@
 class Globals {
     // constants
     static final String PROJECT = 'flexprep'
-    static final String IMAGE_REPO_INTERN = 'docker-intern-nexus.meteoswiss.ch'
-    static final String IMAGE_REPO_PUBLIC = 'docker-public-nexus.meteoswiss.ch'
-    static final String IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/flexpart_ifs/flexprep'
-    static final String IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/flexpart_ifs/flexprep'
+    static final String NEXUS_IMAGE_REPO_INTERN = 'docker-intern-nexus.meteoswiss.ch'
+    static final String NEXUS_IMAGE_REPO_PUBLIC = 'docker-public-nexus.meteoswiss.ch'
+    static final String NEXUS_IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/flexpart_ifs/flexprep'
+    static final String NEXUS_IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/numericalweatherpredictions/flexpart_ifs/flexprep'
+    static final String ECR_REPO = '493666016161.dkr.ecr.eu-central-2.amazonaws.com'
+    static final String ECR_IMAGE_NAME = '493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep'
+
 
     // sets the pipeline to execute all steps related to building the service
     static boolean build = false
@@ -39,9 +42,11 @@ class Globals {
     // the image tag used for tagging the image
     static String imageTagIntern = ''
     static String imageTagPublic = ''
+    static String imageTagECR = ''
 
     // the service version
     static String version = ''
+
 }
 
 
@@ -62,6 +67,7 @@ pipeline {
 
         string(name: 'version', description: 'The release version, must follow semantic versioning (e.g. v1.0.0)')
         booleanParam(name: 'PUBLISH_DOCUMENTATION', defaultValue: false, description: 'Publishes the generated documentation')
+        booleanParam(name: 'PUSH_IMAGES_TO_ECR', defaultValue: false, description: 'Push images to ECR?')
     }
 
     options {
@@ -77,6 +83,8 @@ pipeline {
     environment {
         KUBECONFIG = "$workspace/.kube/config"
         scannerHome = tool name: 'Sonarqube-certs-PROD', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+        PATH = "/opt/maker/tools/aws:$PATH"
+        TAG = "${sh(script: "echo `date +%g%m.$GIT_COMMIT`", returnStdout: true).trim()}"
     }
 
     stages {
@@ -128,14 +136,10 @@ pipeline {
                             Globals.version = "${shortBranchName}-${version}"
                         }
                         echo "Using version ${Globals.version}"
-                        if (env.BRANCH_NAME == 'main') {
-                            Globals.imageTagIntern = "${Globals.IMAGE_NAME_INTERN}:latest"
-                            Globals.imageTagPublic = "${Globals.IMAGE_NAME_PUBLIC}:latest"
-                        } else {
-                            Globals.imageTagIntern = "${Globals.IMAGE_NAME_INTERN}:${shortBranchName}"
-                            Globals.imageTagPublic = "${Globals.IMAGE_NAME_PUBLIC}:${shortBranchName}"
-                        }
-                        echo "Using container version ${Globals.imageTagIntern} and ${Globals.imageTagPublic}"
+                        Globals.imageTagIntern = "${Globals.NEXUS_IMAGE_NAME_INTERN}:${TAG}"
+                        Globals.imageTagPublic = "${Globals.NEXUS_IMAGE_NAME_PUBLIC}:${TAG}"
+                        Globals.imageTagECR = "${Globals.ECR_IMAGE_NAME}:${TAG}"
+                        echo "Using container version ${Globals.imageTagIntern}, ${Globals.imageTagPublic} and ${Globals.imageTagECR} "
                     }
                 }
             }
@@ -205,7 +209,7 @@ pipeline {
                         echo "---- CREATE IMAGE ----"
                         sh """
                         podman build --pull --target runner --build-arg VERSION=${Globals.version} -t ${Globals.imageTagIntern} .
-                        podman tag ${Globals.imageTagIntern} ${Globals.imageTagPublic}
+                        podman tag ${Globals.imageTagIntern} ${Globals.imageTagPublic} ${Globals.imageTagECR}
                         """
                     }
                 }
@@ -235,16 +239,33 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
                             passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
                             sh """
-                            echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
+                            echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
                             podman push ${Globals.imageTagIntern}
+                            echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin
+                            podman push ${Globals.imageTagPublic}
                             """
-                            if (env.BRANCH_NAME == 'main'){
-                                sh """
-                                echo $NXPASS | podman login ${Globals.IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin
-                                podman push ${Globals.imageTagPublic}
-                                """
+                        }
+                        if (params.PUSH_IMAGES_TO_ECR) {
+                            withCredentials([usernamePassword(credentialsId: 'aws-icon-sandbox',
+                                                        passwordVariable: 'AWS_SECRET_ACCESS_KEY',
+                                                        usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                            echo "---- PUBLISH IMAGE TO ECR ----"
+                            sh """
+                            #!/bin/bash
+
+                            if test -f /etc/ssl/certs/ca-certificates.crt; then
+                                export AWS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+                            else
+                                export AWS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+                            fi
+                            aws ecr get-login-password --region eu-central-2 | podman login --username AWS --password-stdin --cert-dir /etc/ssl/certs ${ECR_REPO}
+
+                            podman push --cert-dir /etc/ssl/certs ${Globals.imageTagECR}
+                            aws ssm put-parameter --name "/flexpart_ifs/flexprep/containertag" --type "String" --value "${TAG}" --overwrite --region eu-central-2
+
+                            """
                             }
-                        }  
+                        }
                     }
                 }
                 script {
@@ -262,9 +283,12 @@ pipeline {
             post {
                 cleanup {
                     script {  
-                        sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
+                        sh "podman logout ${Globals.NEXUS_IMAGE_REPO_INTERN} || true"
                         if (env.BRANCH_NAME == 'main'){
-                            sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
+                            sh "podman logout ${Globals.NEXUS_IMAGE_REPO_PUBLIC} || true"
+                        }
+                        if (params.PUSH_IMAGES_TO_ECR) {
+                            sh "podman logout ${ECR_REPO} || true"
                         }
                         sh 'oc logout || true'
                     } 
@@ -286,10 +310,10 @@ pipeline {
                     echo "---- TRIVY SCAN ----"
                     withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
                         passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
-                        sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin"
+                        sh "echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_INTERN} -u $NXUSER --password-stdin"
                         runDevScript("test/trivyscanner.py ${Globals.imageTagIntern}")
                         if (env.BRANCH_NAME == 'main'){
-                            sh "echo $NXPASS | podman login ${Globals.IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin"
+                            sh "echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin"
                             runDevScript("test/trivyscanner.py ${Globals.imageTagPublic}")
                         }
                     }
@@ -298,9 +322,9 @@ pipeline {
             post {
                 cleanup {
                     script { 
-                        sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
+                        sh "podman logout ${Globals.NEXUS_IMAGE_REPO_INTERN} || true"
                         if (env.BRANCH_NAME == 'main'){
-                            sh "podman logout ${Globals.IMAGE_REPO_PUBLIC} || true"
+                            sh "podman logout ${Globals.NEXUS_IMAGE_REPO_PUBLIC} || true"
                         }
                     } 
                 }
@@ -325,9 +349,9 @@ pipeline {
                         passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
                         echo 'Push to image registry'
                         sh """
-                           echo $NXPASS | podman login ${Globals.IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
-                           podman tag ${Globals.imageTagIntern} ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv}
-                           podman push ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv}
+                           echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
+                           podman tag ${Globals.imageTagIntern} ${Globals.NEXUS_IMAGE_NAME_INTERN}:${Globals.ocpEnv}
+                           podman push ${Globals.NEXUS_IMAGE_NAME_INTERN}:${Globals.ocpEnv}
                         """
                     }
 
@@ -341,7 +365,7 @@ pipeline {
             }
             post {
                 cleanup {
-                    sh "podman logout ${Globals.IMAGE_REPO_INTERN} || true"
+                    sh "podman logout ${Globals.NEXUS_IMAGE_REPO_INTERN} || true"
                     sh "oc logout || true"
                 }
             }
@@ -397,7 +421,8 @@ pipeline {
             sh "podman image rm -f ${Globals.imageTagIntern}-tester || true"
             sh "podman image rm -f ${Globals.imageTagIntern} || true"
             sh "podman image rm -f ${Globals.imageTagPublic} || true"
-            sh "podman image rm -f ${Globals.IMAGE_NAME_INTERN}:${Globals.ocpEnv} || true"
+            sh "podman image rm -f ${Globals.imageTagECR} || true"
+            sh "podman image rm -f ${Globals.NEXUS_IMAGE_NAME_INTERN}:${Globals.ocpEnv} || true"
         }
         aborted {
             updateGitlabCommitStatus name: 'Build', state: 'canceled'
