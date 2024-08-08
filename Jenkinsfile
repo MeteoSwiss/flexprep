@@ -136,17 +136,10 @@ pipeline {
                             Globals.version = "${shortBranchName}-${version}"
                         }
                         echo "Using version ${Globals.version}"
-                        if (env.BRANCH_NAME == 'main') {
-                            Globals.imageTagIntern = "${Globals.NEXUS_IMAGE_NAME_INTERN}:latest"
-                            Globals.imageTagPublic = "${Globals.NEXUS_IMAGE_NAME_PUBLIC}:latest"
-                            Globals.imageTagECR = "${Globals.ECR_IMAGE_NAME}:latest"
-
-                        } else {
-                            Globals.imageTagIntern = "${Globals.NEXUS_IMAGE_NAME_INTERN}:${shortBranchName}"
-                            Globals.imageTagPublic = "${Globals.NEXUS_IMAGE_NAME_PUBLIC}:${shortBranchName}"
-                            Globals.imageTagECR = "${Globals.ECR_IMAGE_NAME}:${shortBranchName}"
-                        }
-                        echo "Using container version ${Globals.imageTagIntern} and ${Globals.imageTagPublic}"
+                        Globals.imageTagIntern = "${Globals.NEXUS_IMAGE_NAME_INTERN}:${TAG}"
+                        Globals.imageTagPublic = "${Globals.NEXUS_IMAGE_NAME_PUBLIC}:${TAG}"
+                        Globals.imageTagECR = "${Globals.ECR_IMAGE_NAME}:${TAG}"
+                        echo "Using container version ${Globals.imageTagIntern}, ${Globals.imageTagPublic} and ${Globals.imageTagECR} "
                     }
                 }
             }
@@ -248,13 +241,9 @@ pipeline {
                             sh """
                             echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_INTERN} -u $NXUSER --password-stdin
                             podman push ${Globals.imageTagIntern}
+                            echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin
+                            podman push ${Globals.imageTagPublic}
                             """
-                            if (env.BRANCH_NAME == 'main'){
-                                sh """
-                                echo $NXPASS | podman login ${Globals.NEXUS_IMAGE_REPO_PUBLIC} -u $NXUSER --password-stdin
-                                podman push ${Globals.imageTagPublic}
-                                """
-                            }
                         }
                         if (params.PUSH_IMAGES_TO_ECR) {
                             withCredentials([usernamePassword(credentialsId: 'aws-icon-sandbox',
