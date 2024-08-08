@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime
 from itertools import groupby
+import typing
 
 from flexprep import CONFIG
 from flexprep.domain.processing import Processing
 
 
-def aggregate_s3_objects(objects):
+def aggregate_s3_objects(objects: dict[str, typing.Any]) -> list[dict[str, str | datetime | int]]:
     obj_in_s3 = []
 
     for item in objects.get("Contents", []):
@@ -43,7 +44,7 @@ def aggregate_s3_objects(objects):
     return obj_in_s3
 
 
-def launch_pre_processing(objects):
+def launch_pre_processing(objects: dict[str, typing.Any]) -> None:
     obj_in_s3 = aggregate_s3_objects(objects)
     for fcst_ref_time, group in groupby(
         obj_in_s3, key=lambda x: x["forecast_ref_time"]
