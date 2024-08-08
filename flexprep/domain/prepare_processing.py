@@ -65,11 +65,11 @@ def launch_pre_processing(objects: dict[str, typing.Any]) -> None:
             step = file["step"]
 
             if (
-                step - CONFIG.main.time_settings.tstart
+                int(step) - CONFIG.main.time_settings.tstart
             ) % CONFIG.main.time_settings.tincr != 0:
                 continue
 
-            prev_step = step - CONFIG.main.time_settings.tincr
+            prev_step = int(step) - CONFIG.main.time_settings.tincr
             if prev_step not in steps or file["processed"] == "Y":
                 logging.info(
                     f"Not launching Pre-Processing for timestep {step}: "
