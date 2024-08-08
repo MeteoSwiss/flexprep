@@ -258,7 +258,7 @@ pipeline {
                             else
                                 export AWS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
                             fi
-                            aws ecr get-login-password --region eu-central-2 | podman login --username AWS --password-stdin --cert-dir /etc/ssl/certs ${ECR_REPO}
+                            aws ecr get-login-password --region eu-central-2 | podman login --username AWS --password-stdin --cert-dir /etc/ssl/certs ${Globals.ECR_REPO}
 
                             podman push --cert-dir /etc/ssl/certs ${Globals.imageTagECR}
                             aws ssm put-parameter --name "/flexpart_ifs/flexprep/containertag" --type "String" --value "${TAG}" --overwrite --region eu-central-2
@@ -288,7 +288,7 @@ pipeline {
                             sh "podman logout ${Globals.NEXUS_IMAGE_REPO_PUBLIC} || true"
                         }
                         if (params.PUSH_IMAGES_TO_ECR) {
-                            sh "podman logout ${ECR_REPO} || true"
+                            sh "podman logout ${Globals.ECR_REPO} || true"
                         }
                         sh 'oc logout || true'
                     } 
