@@ -21,11 +21,11 @@ class S3client:
             secret_key=os.getenv("S3INPUT_SECRET_KEY", ""),
         )
 
-        # self.s3_client_output = self._create_s3_client(
-        #    endpoint_url=CONFIG.main.s3_buckets.output.name,
-        #    access_key=os.getenv("S3OUTPUT_ACCESS_KEY", ""),
-        #    secret_key=os.getenv("S3OUTPUT_SECRET_KEY", ""),
-        # )
+        self.s3_client_output = self._create_s3_client(
+            endpoint_url=CONFIG.main.s3_buckets.output.name,
+            access_key=os.getenv("S3OUTPUT_ACCESS_KEY", ""),
+            secret_key=os.getenv("S3OUTPUT_SECRET_KEY", ""),
+        )
 
     def check_bucket(self, s3_client: BaseClient, bucket_name: str) -> None:
         try:
@@ -71,11 +71,11 @@ class S3client:
             )
             raise e
 
-    def upload_file(s3_client: BaseClient, bucket: str, local_path: str) -> None:
+    def upload_file(self, local_path: str) -> None:
         """Upload a local file to an S3 bucket."""
         key = os.path.basename(local_path)
         try:
-            s3_client.upload_file(local_path, bucket, key)
+            self.s3_client_output.upload_file(local_path, CONFIG.main.s3_buckets.output.name, key)
             logging.info(f"Uploaded file to S3: {key}")
         except ClientError as e:
             logging.error(f"Error uploading file {local_path}: {e}")

@@ -122,7 +122,7 @@ class Processing:
     def _save_output(
         self, ds_out: typing.Any, forecast_ref_time: str, step_to_process: int
     ) -> None:
-        """Save processed data to a temporary file."""
+        """Save processed data to a temporary file and upload to output-S3."""
         output_file = tempfile.NamedTemporaryFile(
             suffix=f"output_dispf{forecast_ref_time}_{step_to_process}", delete=False
         )
@@ -131,3 +131,4 @@ class Processing:
                 if field.attrs.get("v_coord") == "hybrid":
                     logging.info(f"Writing GRIB fields to {output_file.name}")
                     grib_decoder.save(field, fout)
+        S3client().upload_file(output_file.name)
