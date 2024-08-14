@@ -27,10 +27,3 @@ To replay notifications for a specific time range, use the following command:
 ```bash
 aviso listen --from 2020-01-20T00:00:00.0Z --to 2020-01-22T00:00:00.0Z
 ```
-
-
-
-
-
-
-

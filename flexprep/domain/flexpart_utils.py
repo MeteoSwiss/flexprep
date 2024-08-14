@@ -4,6 +4,28 @@ from typing import Any
 
 FileObject = dict[str, Any]
 
+# Define constants and input fields for pre-flexpart
+CONSTANTS = {"z", "lsm", "sdor"}
+INPUT_FIELDS = {
+    "u",
+    "v",
+    "etadot",
+    "t",
+    "q",
+    "sp",
+    "10u",
+    "10v",
+    "2t",
+    "2d",
+    "tcc",
+    "sd",
+    "cp",
+    "lsp",
+    "ssr",
+    "sshf",
+    "ewss",
+    "nsss",
+}
 
 def prepare_output(
     ds_out: dict[str, typing.Any],
