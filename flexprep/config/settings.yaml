@@ -13,7 +13,7 @@ main:
       endpoint_url: https://object-store.os-api.cci1.ecmwf.int
       name: flexpart-input
     output:
-      endpoint_url: ""
+      endpoint_url: https://object-store.os-api.cci1.ecmwf.int
       name: flexprep-output
   time_settings:
     tincr: 3

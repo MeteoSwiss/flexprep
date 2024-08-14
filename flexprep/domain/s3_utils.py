@@ -17,14 +17,14 @@ class S3client:
     def __init__(self) -> None:
         self.s3_client_input = self._create_s3_client(
             endpoint_url=CONFIG.main.s3_buckets.input.endpoint_url,
-            access_key=os.getenv("S3INPUT_ACCESS_KEY", ""),
-            secret_key=os.getenv("S3INPUT_SECRET_KEY", ""),
+            access_key=os.getenv("S3_ACCESS_KEY", ""),
+            secret_key=os.getenv("S3_SECRET_KEY", ""),
         )
 
         self.s3_client_output = self._create_s3_client(
-            endpoint_url=CONFIG.main.s3_buckets.output.name,
-            access_key=os.getenv("S3OUTPUT_ACCESS_KEY", ""),
-            secret_key=os.getenv("S3OUTPUT_SECRET_KEY", ""),
+            endpoint_url=CONFIG.main.s3_buckets.output.endpoint_url,
+            access_key=os.getenv("S3_ACCESS_KEY", ""),
+            secret_key=os.getenv("S3_SECRET_KEY", ""),
         )
 
     def check_bucket(self, s3_client: BaseClient, bucket_name: str) -> None:
