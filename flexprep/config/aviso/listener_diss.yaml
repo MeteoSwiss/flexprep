@@ -23,4 +23,3 @@ listeners:
           TIME: "The time is ${request.time}"
       - type: log
         path: /home/nburgdor/avisoLog.log
-                  

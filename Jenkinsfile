@@ -281,7 +281,7 @@ pipeline {
             }
             post {
                 cleanup {
-                    script {  
+                    script {
                         sh "podman logout ${Globals.NEXUS_IMAGE_REPO_INTERN} || true"
                         if (env.BRANCH_NAME == 'main'){
                             sh "podman logout ${Globals.NEXUS_IMAGE_REPO_PUBLIC} || true"
@@ -290,7 +290,7 @@ pipeline {
                             sh "podman logout ${Globals.ECR_REPO} || true"
                         }
                         sh 'oc logout || true'
-                    } 
+                    }
                 }
             }
         }
@@ -304,7 +304,7 @@ pipeline {
                 HTTPS_PROXY = "http://proxy.meteoswiss.ch:8080"
             }
             steps {
-                script { 
+                script {
                     echo "---- TRIVY SCAN ----"
                     withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
                         passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
@@ -315,16 +315,16 @@ pipeline {
                             runDevScript("test/trivyscanner.py ${Globals.imageTagPublic}")
                         }
                     }
-                } 
+                }
             }
             post {
                 cleanup {
-                    script { 
+                    script {
                         sh "podman logout ${Globals.NEXUS_IMAGE_REPO_INTERN} || true"
                         if (env.BRANCH_NAME == 'main'){
                             sh "podman logout ${Globals.NEXUS_IMAGE_REPO_PUBLIC} || true"
                         }
-                    } 
+                    }
                 }
             }
         }

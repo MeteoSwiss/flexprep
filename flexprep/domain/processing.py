@@ -6,9 +6,9 @@ import typing
 import meteodatalab.operators.flexpart as flx
 from meteodatalab import config, data_source, grib_decoder, metadata
 
-from flexprep.domain.flexpart_utils import prepare_output, CONSTANTS, INPUT_FIELDS
-from flexprep.domain.s3_utils import S3client
 from flexprep.domain.db_utils import DB
+from flexprep.domain.flexpart_utils import CONSTANTS, INPUT_FIELDS, prepare_output
+from flexprep.domain.s3_utils import S3client
 from flexprep.domain.validation_utils import validate_dataset
 
 
@@ -35,7 +35,9 @@ class Processing:
         self._save_output(
             ds_out, to_process["forecast_ref_time"], int(to_process["step"])
         )
-        DB().update_item_as_processed(to_process["forecast_ref_time"], to_process["step"], to_process["location"])
+        DB().update_item_as_processed(
+            to_process["forecast_ref_time"], to_process["step"], to_process["location"]
+        )
 
     def _sort_and_download_files(
         self, file_objs: list[FileObject]
@@ -49,9 +51,11 @@ class Processing:
             to_process = sorted_files[0]
             prev_file = sorted_files[1]
 
-            init_files = sorted_files[2:4] if int(prev_file["step"]) == 0 else sorted_files[2:4]
+            init_files = (
+                sorted_files[2:4] if int(prev_file["step"]) == 0 else sorted_files[2:4]
+            )
             files_to_download = [to_process, prev_file] + init_files
-            
+
             tempfiles = self._download_files(files_to_download)
             return tempfiles, to_process, prev_file
 
@@ -62,7 +66,9 @@ class Processing:
     def _download_files(self, files_to_download: list[FileObject]) -> list[str]:
         """Download files from S3 based on the file objects."""
         try:
-            return [self.s3_client.download_file(file_obj) for file_obj in files_to_download]
+            return [
+                self.s3_client.download_file(file_obj) for file_obj in files_to_download
+            ]
         except Exception as e:
             logging.error(f"File download failed: {e}")
             raise RuntimeError("An error occurred while downloading files.") from e
@@ -84,7 +90,7 @@ class Processing:
                     int(prev_file["step"]),
                 )
                 ds_in |= metadata.extract_pv(ds_in["u"].message)
-            
+
             return ds_in
 
         except Exception as e:
@@ -110,8 +116,8 @@ class Processing:
             # Create a temporary file with a specific suffix
             with tempfile.NamedTemporaryFile(
                 suffix=f"output_dispf{forecast_ref_time}_{step_to_process}",
-                delete=False
-                ) as output_file:
+                delete=False,
+            ) as output_file:
                 # Write data to the temporary file
                 with open(output_file.name, "wb") as fout:
                     for name, field in ds_out.items():

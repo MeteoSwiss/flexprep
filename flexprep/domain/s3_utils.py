@@ -75,7 +75,9 @@ class S3client:
         """Upload a local file to an S3 bucket."""
         key = os.path.basename(local_path)
         try:
-            self.s3_client_output.upload_file(local_path, CONFIG.main.s3_buckets.output.name, key)
+            self.s3_client_output.upload_file(
+                local_path, CONFIG.main.s3_buckets.output.name, key
+            )
             logging.info(f"Uploaded file to S3: {key}")
         except ClientError as e:
             logging.error(f"Error uploading file {local_path}: {e}")

@@ -13,4 +13,3 @@ configuration_engine:
 schema_parser: ecmwf
 remote_schema: True
 auth_type: ecmwf
-

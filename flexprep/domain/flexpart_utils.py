@@ -27,6 +27,7 @@ INPUT_FIELDS = {
     "nsss",
 }
 
+
 def prepare_output(
     ds_out: dict[str, typing.Any],
     ds_in: dict[str, typing.Any],
