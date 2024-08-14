@@ -2,7 +2,7 @@
 import argparse
 import logging
 
-from domain.models import IFSForecast
+from flexprep.flexprep.domain.data_model import IFSForecast
 from flexprep.services.processing_service import process
 
 if __name__ == "__main__":
