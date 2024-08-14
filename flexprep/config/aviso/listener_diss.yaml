@@ -8,10 +8,19 @@ listeners:
       stream: oper
     triggers:
       - type: command
-        working_dir: $HOME/flexpart-poc
-        command: ./post-to-sqs.sh --step ${request.step} --date ${request.date} --time ${request.time} --location ${location}
+        working_dir: "$HOME/flexpart-poc"
+        command: >
+          docker run \
+            -v /host/path:/container/path \
+            --env-file .env \
+            493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep:2408.8a89852bd0a76e1930ea53b992c5035423d91485 \
+            --step "${request.step}" \
+            --date "${request.date}" \
+            --time "${request.time}" \
+            --location "${location}"
         environment:
-          STEP: ${request.step}
+          STEP: "${request.step}"
           TIME: "The time is ${request.time}"
       - type: log
-        path: /home/nburgdor/avisoLog.log                                           
+        path: /home/nburgdor/avisoLog.log
+                  
