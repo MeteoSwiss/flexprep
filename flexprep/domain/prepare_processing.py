@@ -5,92 +5,65 @@ import typing
 
 from flexprep import CONFIG
 from flexprep.domain.processing import Processing
+from flexprep.domain.db_utils import DB
 
+def launch_pre_processing(ifs_forecast_obj):
+    db = DB()
 
-def aggregate_s3_objects(objects: dict[str, typing.Any]) -> list[dict[str, str | datetime | int]]:
-    obj_in_s3 = []
+    # Insert the forecast object into the database
+    db.insert_item(ifs_forecast_obj)
+    logging.info(
+        f"Put item ({ifs_forecast_obj.forecast_ref_time}, {ifs_forecast_obj.step}, {ifs_forecast_obj.location}) succeeded."
+    )
 
-    for item in objects.get("Contents", []):
-        key = item.get("Key")
-        forecast_ref_time_str = f"{datetime.now().year}{key[3:11]}"
-        forecast_ref_time = datetime.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
-        valid_time_str = f"{datetime.now().year}{key[11:18]}"
-        valid_time_obj = datetime.strptime(valid_time_str, "%Y%m%d%H%M")
+    # Query the table for items with the same forecast reference time
+    items_in_table = db.query_table(ifs_forecast_obj.forecast_ref_time)
 
-        step = (
-            0
-            # Filenames follow the pattern ccSMMDDHHIImmddhhiiE,
-            # where mmddhhii denotes the month, day, hour, and minute
-            #
-            # Example Filenames:
-            # - P1S06180000061800011: Stream S, variables at step = 0
-            # - P1D06180000061800001: Stream D, constants at step = 0
-            #
-            # In these filenames, the second-to-last digit indicates:
-            # - Minute = 1 for variables (stream S)
-            # - Minute = 0 for constants (stream D) at step = 0.
-            if valid_time_obj.minute == 1
-            else int((valid_time_obj - forecast_ref_time).total_seconds() / 3600)
+    # Get step zero items and all steps
+    step_zero = [item.to_dict() for item in items_in_table if item.step == 0]
+    steps = [item.step for item in items_in_table]
+
+    # Check if there are enough step=0 files
+    if len(step_zero) < 2:
+        message = (
+            f"Currently only {len(step_zero)} step=0 files are available. "
+            "Waiting for these before processing."
         )
-        obj_in_s3.append(
-            {
-                "key": key,
-                "forecast_ref_time": forecast_ref_time,
-                "step": step,
-                "processed": "N",
-            }
+        logging.info(message)
+        return  # Exit the function if there aren't enough step=0 files
+
+    step = ifs_forecast_obj.step
+    # Check if the step is aligned with the time increment settings
+    if (
+        step - CONFIG.main.time_settings.tstart
+    ) % CONFIG.main.time_settings.tincr != 0:
+        return  # Exit if the step is not aligned with time increment
+
+    prev_step = step - CONFIG.main.time_settings.tincr
+    # Check if the previous step exists or if the current object has already been processed
+    if prev_step not in steps or ifs_forecast_obj.processed == True:
+        logging.info(
+            f"Not launching Pre-Processing for timestep {step}: "
+            f"prev_step in steps: {prev_step in steps}, "
+            f"processed: {ifs_forecast_obj.processed == True}"
         )
-    obj_in_s3.sort(key=lambda x: x["forecast_ref_time"])
-    return obj_in_s3
+        return  # Exit if the previous step is missing or already processed
 
+    logging.info(f"Launching Pre-Processing for timestep {step}")
 
-def launch_pre_processing(objects: dict[str, typing.Any]) -> None:
-    obj_in_s3 = aggregate_s3_objects(objects)
-    for fcst_ref_time, group in groupby(
-        obj_in_s3, key=lambda x: x["forecast_ref_time"]
-    ):
-        files_per_run = list(group)
-        step_zero = [file for file in files_per_run if file["step"] == 0]
-        steps = [file["step"] for file in files_per_run]
+    # Process step zero and the current step object
+    if prev_step == 0:
+        Processing().process(step_zero + ifs_forecast_obj.to_dict())
+    else:
+        # Find the previous step object
+        prev_obj = next(
+            (item.to_dict() for item in items_in_table if item.step == prev_step),
+            None,
+        )
+        if prev_obj:
+            Processing().process(step_zero + [prev_obj, ifs_forecast_obj.to_dict()])
+        else:
+            msg = f"Cannot find file for previous step {prev_step}"
+            logging.error(msg)
+            raise ValueError(msg)
 
-        if len(step_zero) < 2:
-            message = (
-                f"Currently only {len(step_zero)} step=0 files are available. "
-                "Waiting for these before processing."
-            )
-            logging.info(message)
-            continue
-
-        for file in files_per_run:
-            step = typing.cast(int, file["step"])
-
-            if (
-                step - CONFIG.main.time_settings.tstart
-            ) % CONFIG.main.time_settings.tincr != 0:
-                continue
-
-            prev_step = step - CONFIG.main.time_settings.tincr
-            if prev_step not in steps or file["processed"] == "Y":
-                logging.info(
-                    f"Not launching Pre-Processing for timestep {step}: "
-                    f"prev_step in steps: {prev_step in steps}, "
-                    f"processed: {file['processed'] == 'Y'}"
-                )
-                continue
-
-            logging.info(f"Launching Pre-Processing for timestep {step}")
-            if prev_step == 0:
-                Processing().process(step_zero + [file.copy()])
-            else:
-                prev_file = next(
-                    (item for item in files_per_run if item["step"] == prev_step),
-                    None,
-                )
-                if prev_file:
-                    Processing().process(step_zero + [prev_file, file.copy()])
-                else:
-                    msg = f"Cannot find file for previous step {prev_step}"
-                    logging.error(msg)
-                    raise ValueError(msg)
-
-            file["processed"] = "Y"
