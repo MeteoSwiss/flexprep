@@ -8,6 +8,7 @@ from meteodatalab import config, data_source, grib_decoder, metadata
 
 from flexprep.domain.flexpart_utils import prepare_output
 from flexprep.domain.s3_utils import S3client
+from flexprep.domain.db_utils import DB
 from flexprep.domain.validation_utils import validate_dataset
 
 # Define constants and input fields for pre-flexpart
@@ -56,6 +57,7 @@ class Processing:
         self._save_output(
             ds_out, to_process["forecast_ref_time"], int(to_process["step"])
         )
+        DB().update_item_as_processed(to_process["forecast_ref_time"], to_process["step"], to_process["location"])
 
     def _sort_and_download_files(
         self, file_objs: list[FileObject]

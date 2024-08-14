@@ -9,6 +9,7 @@ class DB:
 
     def __init__(self) -> None:
         try:
+            """Establish a database connection."""
             self.db_path = CONFIG.main.db_path
             self.conn = sqlite3.connect(self.db_path)
             logging.info("Connected to database.")
@@ -69,3 +70,19 @@ class DB:
         except sqlite3.Error as e:
             logging.error(f"An error occurred while querying the database: {e}")
             return []
+
+    def update_item_as_processed(self, forecast_ref_time: str, step: int, location: str) -> None:
+        """Update the 'processed' field of a specific item to True."""
+        try:
+            with self.conn:
+                result = self.conn.execute("""
+                    UPDATE uploaded 
+                    SET processed = 1 
+                    WHERE forecast_ref_time = ? AND step = ? AND location = ?
+                """, (forecast_ref_time, step, location))
+                if result.rowcount > 0:
+                    logging.info("Item marked as processed.")
+                else:
+                    logging.warning("No item found to update.")
+        except sqlite3.Error as e:
+            logging.error(f"An error occurred while updating the item: {e}")
