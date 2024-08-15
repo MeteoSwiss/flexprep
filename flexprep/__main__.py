@@ -5,7 +5,7 @@ import logging
 import sys
 
 from flexprep.domain.prepare_processing import launch_pre_processing
-from flexprep.flexprep.domain.data_model import IFSForecast
+from flexprep.domain.data_model import IFSForecast
 
 
 def parse_arguments():
