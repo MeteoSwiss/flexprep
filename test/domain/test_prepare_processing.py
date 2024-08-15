@@ -1,90 +1,94 @@
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from flexprep.domain.prepare_processing import (
-    aggregate_s3_objects,
-    launch_pre_processing,
+import pytest
+
+from flexprep.domain.data_model import IFSForecast
+from flexprep.domain.prepare_processing import launch_pre_processing
+
+
+@pytest.mark.parametrize(
+    "query_return_value, test_forecast_obj, expected_call_args, expected_call_count",
+    [
+        # Case 1: Enough zero steps
+        (
+            [
+                IFSForecast("202406180000", 0, "loc1", False),
+                IFSForecast("202406180000", 0, "loc2", False),
+                IFSForecast("202406180000", 3, "loc2", False),
+            ],
+            IFSForecast("202406180000", 3, "loc3", False),
+            [
+                {
+                    "forecast_ref_time": "202406180000",
+                    "step": 0,
+                    "location": "loc1",
+                    "processed": False,
+                },
+                {
+                    "forecast_ref_time": "202406180000",
+                    "step": 0,
+                    "location": "loc2",
+                    "processed": False,
+                },
+                {
+                    "forecast_ref_time": "202406180000",
+                    "step": 3,
+                    "location": "loc3",
+                    "processed": False,
+                },
+            ],
+            1,
+        ),
+        # Case 2: Not enough zero steps
+        (
+            [
+                IFSForecast("202406180000", 0, "loc1", False),
+                IFSForecast("202406180000", 3, "loc2", False),
+            ],
+            IFSForecast("202406180000", 3, "loc3", False),
+            [
+                {
+                    "forecast_ref_time": "202406180000",
+                    "step": 0,
+                    "location": "loc1",
+                    "processed": False,
+                },
+                {
+                    "forecast_ref_time": "202406180000",
+                    "step": 3,
+                    "location": "loc3",
+                    "processed": False,
+                },
+            ],
+            0,
+        ),
+    ],
 )
-
-
-def test_aggregate_s3_objects():
-
-    objects = {
-        "Contents": [
-            {"Key": "P1S06180000061800011"},
-            {"Key": "P1S06180300061803001"},
-            {"Key": "P1D06180000061800001"},
-        ]
-    }
-
-    result = aggregate_s3_objects(objects)
-
-    expected_result = [
-        {
-            "key": "P1S06180000061800011",
-            "forecast_ref_time": datetime(2024, 6, 18, 0, 0),
-            "step": 0,
-            "processed": "N",
-        },
-        {
-            "key": "P1D06180000061800001",
-            "forecast_ref_time": datetime(2024, 6, 18, 0, 0),
-            "step": 0,
-            "processed": "N",
-        },
-        {
-            "key": "P1S06180300061803001",
-            "forecast_ref_time": datetime(2024, 6, 18, 3, 0),
-            "step": 0,
-            "processed": "N",
-        },
-    ]
-
-    assert result == expected_result
-
-
+@patch("flexprep.domain.prepare_processing.DB")
 @patch("flexprep.domain.prepare_processing.Processing")
-def test_launch_pre_processing(MockProcessing):
+def test_launch_pre_processing(
+    MockProcessing,
+    MockDB,
+    query_return_value,
+    test_forecast_obj,
+    expected_call_args,
+    expected_call_count,
+):
+    # Mock the database interactions
+    mock_db_instance = MockDB.return_value
+    mock_db_instance.query_table.return_value = query_return_value
+
+    # Mock the Processing class
     mock_processing_instance = MockProcessing.return_value
     mock_processing_instance.process = MagicMock()
 
-    objects = {
-        "Contents": [
-            {"Key": "P1S06180000061800011"},
-            {"Key": "P1S06180000061803001"},
-            {"Key": "P1D06180000061800001"},
-        ]
-    }
-
-    launch_pre_processing(objects)
-
-    # Verify that the process method was called the expected number of times
-    assert mock_processing_instance.process.call_count == 1
-    # Verify that the process method was called with the expected arguments
-    # Expected call arguments
-    expected_call_args = [
-        {
-            "key": "P1S06180000061800011",
-            "forecast_ref_time": datetime(2024, 6, 18, 0, 0),
-            "step": 0,
-            "processed": "N",
-        },
-        {
-            "key": "P1D06180000061800001",
-            "forecast_ref_time": datetime(2024, 6, 18, 0, 0),
-            "step": 0,
-            "processed": "N",
-        },
-        {
-            "key": "P1S06180000061803001",
-            "forecast_ref_time": datetime(2024, 6, 18, 0, 0),
-            "step": 3,
-            "processed": "N",
-        },
-    ]
-
-    # Extract actual call arguments
-    actual_call_args = mock_processing_instance.process.call_args[0][0]
+    # Call the function
+    launch_pre_processing(test_forecast_obj)
 
     # Verify that the process method was called with the expected arguments
-    assert actual_call_args == expected_call_args
+    if expected_call_count > 0:
+        actual_call_args = mock_processing_instance.process.call_args[0][0]
+        assert actual_call_args == expected_call_args
+
+    # Verify the number of times process was called
+    assert mock_processing_instance.process.call_count == expected_call_count
