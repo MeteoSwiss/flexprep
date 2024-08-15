@@ -26,7 +26,7 @@ class DB:
         CREATE TABLE IF NOT EXISTS uploaded (
             forecast_ref_time TEXT NOT NULL,
             step INTEGER NOT NULL,
-            location TEXT NOT NULL,
+            key TEXT NOT NULL,
             processed BOOLEAN NOT NULL
         )
         """
@@ -43,10 +43,10 @@ class DB:
             with self.conn:
                 self.conn.execute(
                     """
-                    INSERT INTO uploaded (forecast_ref_time, step, location, processed)
+                    INSERT INTO uploaded (forecast_ref_time, step, key, processed)
                     VALUES (?, ?, ?, ?)
                 """,
-                    (item.forecast_ref_time, item.step, item.location, item.processed),
+                    (item.forecast_ref_time, item.step, item.key, item.processed),
                 )
             logging.info("Data inserted successfully.")
         except sqlite3.Error as e:
@@ -63,7 +63,7 @@ class DB:
         """
 
         query = (
-            "SELECT forecast_ref_time, step, location, processed "
+            "SELECT forecast_ref_time, step, key, processed "
             "FROM uploaded "
             "WHERE forecast_ref_time = ?"
         )
@@ -78,7 +78,7 @@ class DB:
                     IFSForecast(
                         forecast_ref_time=row[0],
                         step=row[1],
-                        location=row[2],
+                        key=row[2],
                         processed=row[3],
                     )
                     for row in rows
@@ -90,7 +90,7 @@ class DB:
             return []
 
     def update_item_as_processed(
-        self, forecast_ref_time: str, step: int, location: str
+        self, forecast_ref_time: str, step: int, key: str
     ) -> None:
         """Update the 'processed' field of a specific item to True."""
         try:
@@ -99,9 +99,9 @@ class DB:
                     """
                     UPDATE uploaded
                     SET processed = 1
-                    WHERE forecast_ref_time = ? AND step = ? AND location = ?
+                    WHERE forecast_ref_time = ? AND step = ? AND key = ?
                 """,
-                    (forecast_ref_time, step, location),
+                    (forecast_ref_time, step, key),
                 )
                 if result.rowcount > 0:
                     logging.info("Item marked as processed.")

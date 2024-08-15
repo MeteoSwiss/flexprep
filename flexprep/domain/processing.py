@@ -36,7 +36,7 @@ class Processing:
             ds_out, to_process["forecast_ref_time"], int(to_process["step"])
         )
         DB().update_item_as_processed(
-            to_process["forecast_ref_time"], to_process["step"], to_process["location"]
+            to_process["forecast_ref_time"], to_process["step"], to_process["key"]
         )
 
     def _sort_and_download_files(

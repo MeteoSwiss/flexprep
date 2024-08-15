@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 class IFSForecast:
     forecast_ref_time: str
     step: int
-    location: str
+    key: str
     processed: bool
 
     def to_dict(self) -> dict[str, typing.Any]:

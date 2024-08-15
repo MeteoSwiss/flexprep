@@ -3,6 +3,8 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
+
 
 from flexprep.domain.prepare_processing import launch_pre_processing
 from flexprep.domain.data_model import IFSForecast
@@ -30,7 +32,7 @@ def create_ifs_forecast_obj(args):
         return IFSForecast(
             forecast_ref_time=forecast_ref_time,
             step=args.step,
-            location=args.location,
+            key=Path(args.location).name,
             processed=False,
         )
     except Exception as e:
@@ -38,7 +40,7 @@ def create_ifs_forecast_obj(args):
         sys.exit(1)
 
 
-def main():
+if __name__ == "__main__":
     """Main function to parse arguments and process the IFS forecast."""
     logging.basicConfig(level=logging.INFO)
 
@@ -53,6 +55,3 @@ def main():
 
     launch_pre_processing(ifs_forecast_obj)
 
-
-if __name__ == "__main__":
-    main()
