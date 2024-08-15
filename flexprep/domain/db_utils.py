@@ -2,7 +2,7 @@ import logging
 import sqlite3
 
 from flexprep import CONFIG
-from flexprep.flexprep.domain.data_model import IFSForecast
+from flexprep.domain.data_model import IFSForecast
 
 
 class DB:
