@@ -52,9 +52,7 @@ class S3client:
 
     def download_file(self, file_info: FileObject) -> str:
         """Download a file from an S3 bucket to a temporary file."""
-        temp_file = tempfile.NamedTemporaryFile(
-            suffix=file_info["key"], delete=False
-        )
+        temp_file = tempfile.NamedTemporaryFile(suffix=file_info["key"], delete=False)
         try:
             self.s3_client_input.download_file(
                 CONFIG.main.s3_buckets.input.name,

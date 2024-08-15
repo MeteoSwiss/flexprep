@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -18,17 +19,17 @@ def setup_data():
     ds = {
         "temperature": xr.DataArray(
             np.random.rand(3),
-            dims=["time"],
+            dims=["lead_time"],
             coords={
-                "time": [0, 3, 6],
+                "lead_time": pd.to_timedelta([0, 3, 6], "h"),
                 "ref_time": np.datetime64(ref_time, "ns"),
             },
         ),
         "pressure": xr.DataArray(
             np.random.rand(3),
-            dims=["time"],
+            dims=["lead_time"],
             coords={
-                "time": [0, 3, 6],
+                "lead_time": pd.to_timedelta([0, 3, 6], "h"),
                 "ref_time": np.datetime64(ref_time, "ns"),
             },
         ),
@@ -58,8 +59,11 @@ def test_incorrect_time_steps(setup_data):
     # Modify time steps to be incorrect
     ds["temperature"] = xr.DataArray(
         np.random.rand(2),
-        dims=["time"],
-        coords={"time": [0, 7], "ref_time": np.datetime64(ref_time, "ns")},
+        dims=["lead_time"],
+        coords={
+            "lead_time": pd.to_timedelta([0, 7], "h"),
+            "ref_time": np.datetime64(ref_time, "ns"),
+        },
     )
 
     with pytest.raises(ValueError, match="Downloaded steps are incorrect"):
@@ -71,9 +75,9 @@ def test_incorrect_ref_time(setup_data):
     # Modify ref_time to be incorrect
     ds["temperature"] = xr.DataArray(
         np.random.rand(3),
-        dims=["time"],
+        dims=["lead_time"],
         coords={
-            "time": [0, 3, 6],
+            "lead_time": pd.to_timedelta([0, 3, 6], "h"),
             "ref_time": np.datetime64(datetime(2023, 1, 1), "ns"),
         },
     )
