@@ -1,9 +1,12 @@
+from datetime import datetime as dt
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from flexprep.domain.data_model import IFSForecast
 from flexprep.domain.prepare_processing import launch_pre_processing
+
+forecast_ref_time = dt.strptime("202406180000", "%Y%m%d%H%M")
 
 
 @pytest.mark.parametrize(
@@ -12,28 +15,28 @@ from flexprep.domain.prepare_processing import launch_pre_processing
         # Case 1: Enough zero steps
         (
             [
-                IFSForecast("202406180000", 0, "loc1", False),
-                IFSForecast("202406180000", 0, "loc2", False),
-                IFSForecast("202406180000", 3, "loc2", False),
+                IFSForecast(forecast_ref_time, 0, "key1", False),
+                IFSForecast(forecast_ref_time, 0, "key2", False),
+                IFSForecast(forecast_ref_time, 3, "key3", False),
             ],
-            IFSForecast("202406180000", 3, "loc3", False),
+            IFSForecast(forecast_ref_time, 3, "key3", False),
             [
                 {
-                    "forecast_ref_time": "202406180000",
+                    "forecast_ref_time": forecast_ref_time,
                     "step": 0,
-                    "location": "loc1",
+                    "key": "key1",
                     "processed": False,
                 },
                 {
-                    "forecast_ref_time": "202406180000",
+                    "forecast_ref_time": forecast_ref_time,
                     "step": 0,
-                    "location": "loc2",
+                    "key": "key2",
                     "processed": False,
                 },
                 {
-                    "forecast_ref_time": "202406180000",
+                    "forecast_ref_time": forecast_ref_time,
                     "step": 3,
-                    "location": "loc3",
+                    "key": "key3",
                     "processed": False,
                 },
             ],
@@ -42,21 +45,21 @@ from flexprep.domain.prepare_processing import launch_pre_processing
         # Case 2: Not enough zero steps
         (
             [
-                IFSForecast("202406180000", 0, "loc1", False),
-                IFSForecast("202406180000", 3, "loc2", False),
+                IFSForecast(forecast_ref_time, 0, "key1", False),
+                IFSForecast(forecast_ref_time, 3, "key2", False),
             ],
-            IFSForecast("202406180000", 3, "loc3", False),
+            IFSForecast(forecast_ref_time, 3, "key2", False),
             [
                 {
-                    "forecast_ref_time": "202406180000",
+                    "forecast_ref_time": forecast_ref_time,
                     "step": 0,
-                    "location": "loc1",
+                    "key": "key1",
                     "processed": False,
                 },
                 {
-                    "forecast_ref_time": "202406180000",
+                    "forecast_ref_time": forecast_ref_time,
                     "step": 3,
-                    "location": "loc3",
+                    "key": "key2",
                     "processed": False,
                 },
             ],
