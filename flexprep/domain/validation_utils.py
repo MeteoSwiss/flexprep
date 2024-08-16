@@ -39,6 +39,7 @@ def validate_dataset(
         for array in ds.values()
     ):
         raise ValueError("Downloaded steps are incorrect")
+
     if not all(
         (array.coords["ref_time"].values == np.datetime64(ref_time, "ns"))
         for array in ds.values()

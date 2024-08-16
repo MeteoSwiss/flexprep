@@ -71,9 +71,8 @@ class S3client:
             )
             raise e
 
-    def upload_file(self, local_path: str) -> None:
+    def upload_file(self, local_path: str, key: str) -> None:
         """Upload a local file to an S3 bucket."""
-        key = os.path.basename(local_path)
         try:
             self.s3_client_output.upload_file(
                 local_path, CONFIG.main.s3_buckets.output.name, key

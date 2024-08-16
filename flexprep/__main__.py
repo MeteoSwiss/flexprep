@@ -3,11 +3,11 @@
 import argparse
 import logging
 import sys
+from datetime import datetime as dt
 from pathlib import Path
 
-
-from flexprep.domain.prepare_processing import launch_pre_processing
 from flexprep.domain.data_model import IFSForecast
+from flexprep.domain.prepare_processing import launch_pre_processing
 
 
 def parse_arguments():
@@ -28,7 +28,25 @@ def parse_arguments():
 def create_ifs_forecast_obj(args):
     """Create an IFSForecast object based on the parsed arguments."""
     try:
-        forecast_ref_time = f"{args.date}T{args.time}Z"
+        # Get the current year and month
+        now = dt.now()
+        current_year = now.year
+        current_month = now.month
+
+        # Extract month from args.date
+        forecast_month = int(args.date[:2])
+
+        # Determine the correct year for the forecast_ref_time
+        if current_month == 1 and forecast_month == 12:
+            # If current month is Jan and forecast month is Dec, use the prev year
+            forecast_year = current_year - 1
+        else:
+            # Otherwise, use the current year
+            forecast_year = current_year
+
+        # Combine date and time to create forecast_ref_time
+        forecast_ref_time_str = f"{forecast_year}{args.date}{args.time[:4]}"
+        forecast_ref_time = dt.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
         return IFSForecast(
             forecast_ref_time=forecast_ref_time,
             step=args.step,
@@ -54,4 +72,3 @@ if __name__ == "__main__":
     ifs_forecast_obj = create_ifs_forecast_obj(args)
 
     launch_pre_processing(ifs_forecast_obj)
-

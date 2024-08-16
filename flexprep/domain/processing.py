@@ -2,6 +2,7 @@ import logging
 import os
 import tempfile
 import typing
+from datetime import datetime as dt
 
 import meteodatalab.operators.flexpart as flx
 from meteodatalab import config, data_source, grib_decoder, metadata
@@ -109,13 +110,16 @@ class Processing:
         return ds_out
 
     def _save_output(
-        self, ds_out: typing.Any, forecast_ref_time: str, step_to_process: int
+        self, ds_out: typing.Any, forecast_ref_time: dt, step_to_process: int
     ) -> None:
         """Save processed data to a temporary file and upload to output-S3."""
+        forecast_ref_time_str = forecast_ref_time.strftime("%Y%m%d%H%M")
+
         try:
-            # Create a temporary file with a specific suffix
+            key = f"output_dispf{forecast_ref_time_str}_{step_to_process}"
+
             with tempfile.NamedTemporaryFile(
-                suffix=f"output_dispf{forecast_ref_time}_{step_to_process}",
+                suffix=key,
                 delete=False,
             ) as output_file:
                 # Write data to the temporary file
@@ -126,7 +130,7 @@ class Processing:
                             grib_decoder.save(field, fout)
 
             # Upload the file to S3
-            S3client().upload_file(output_file.name)
+            S3client().upload_file(output_file.name, key=key)
 
         except Exception as e:
             logging.error(f"Failed to save or upload output file: {e}")

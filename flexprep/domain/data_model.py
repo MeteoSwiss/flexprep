@@ -1,10 +1,11 @@
 import typing
 from dataclasses import asdict, dataclass
+from datetime import datetime
 
 
 @dataclass
 class IFSForecast:
-    forecast_ref_time: str
+    forecast_ref_time: datetime
     step: int
     key: str
     processed: bool
