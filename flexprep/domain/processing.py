@@ -34,10 +34,10 @@ class Processing:
 
         ds_out = self._apply_flexpart(ds_in)
         self._save_output(
-            ds_out, to_process["forecast_ref_time"], int(to_process["step"])
-        )
-        DB().update_item_as_processed(
-            to_process["forecast_ref_time"], to_process["step"], to_process["key"]
+            ds_out,
+            to_process["forecast_ref_time"],
+            int(to_process["step"]),
+            to_process["key"],
         )
 
     def _sort_and_download_files(
@@ -110,13 +110,17 @@ class Processing:
         return ds_out
 
     def _save_output(
-        self, ds_out: typing.Any, forecast_ref_time: dt, step_to_process: int
+        self,
+        ds_out: typing.Any,
+        forecast_ref_time: dt,
+        step_to_process: int,
+        key_to_process: str,
     ) -> None:
         """Save processed data to a temporary file and upload to output-S3."""
         forecast_ref_time_str = forecast_ref_time.strftime("%Y%m%d%H%M")
 
         try:
-            key = f"output_dispf{forecast_ref_time_str}_{step_to_process}"
+            key = f"output_dispf{forecast_ref_time_str}_step{step_to_process}"
 
             with tempfile.NamedTemporaryFile(
                 suffix=key,
@@ -131,6 +135,11 @@ class Processing:
 
             # Upload the file to S3
             S3client().upload_file(output_file.name, key=key)
+
+            # Mark the item as processed if everything was successful
+            DB().update_item_as_processed(
+                forecast_ref_time, step_to_process, key_to_process
+            )
 
         except Exception as e:
             logging.error(f"Failed to save or upload output file: {e}")

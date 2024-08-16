@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+from datetime import datetime as dt
 
 from flexprep import CONFIG
 from flexprep.domain.data_model import IFSForecast
@@ -90,7 +91,7 @@ class DB:
             return []
 
     def update_item_as_processed(
-        self, forecast_ref_time: str, step: int, key: str
+        self, forecast_ref_time: dt, step: int, key: str
     ) -> None:
         """Update the 'processed' field of a specific item to True."""
         try:
