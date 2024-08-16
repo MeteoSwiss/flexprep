@@ -8,10 +8,10 @@ listeners:
       stream: oper
     triggers:
       - type: command
-        working_dir: "$HOME/flexpart-poc"
+        working_dir: "$HOME"
         command: >
           docker run \
-            --mount type=bind,source=/.sqlite/,destination=/src/app-root/db/
+            --mount type=bind,source=$HOME/.sqlite/,destination=/src/app-root/db/
             --env-file .env \
             493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep:2408.8a89852bd0a76e1930ea53b992c5035423d91485 \
             --step "${request.step}" \
