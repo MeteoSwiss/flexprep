@@ -23,7 +23,7 @@ WORKDIR /src/app-root
 RUN mkdir -p \
     /src/app-root/db
 
-CMD ["python", "-m", "flexprep"]
+ENTRYPOINT ["python", "-m", "flexprep"]
 
 FROM base AS tester
 
