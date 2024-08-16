@@ -23,8 +23,6 @@ WORKDIR /src/app-root
 RUN mkdir -p \
     /src/app-root/db
 
-ENTRYPOINT ["python", "-m", "flexprep"]
-
 FROM base AS tester
 
 COPY --from=builder /src/app-root/requirements_dev.txt /src/app-root/requirements_dev.txt
@@ -52,4 +50,4 @@ ENV VERSION=$VERSION
 # uid 1001 is defined in the base-container-images for this purpose
 USER 1001
 
-CMD ["python", "-m", "flexprep"]
+ENTRYPOINT ["python", "-m", "flexprep"]
