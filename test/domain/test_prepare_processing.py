@@ -15,25 +15,28 @@ forecast_ref_time = dt.strptime("202406180000", "%Y%m%d%H%M")
         # Case 1: Enough zero steps
         (
             [
-                IFSForecast(forecast_ref_time, 0, "key1", False),
-                IFSForecast(forecast_ref_time, 0, "key2", False),
-                IFSForecast(forecast_ref_time, 3, "key3", False),
+                IFSForecast(1, forecast_ref_time, 0, "key1", False),
+                IFSForecast(2, forecast_ref_time, 0, "key2", False),
+                IFSForecast(3, forecast_ref_time, 3, "key3", False),
             ],
-            IFSForecast(forecast_ref_time, 3, "key3", False),
+            IFSForecast(3, forecast_ref_time, 3, "key3", False),
             [
                 {
+                    "row_id": 1,
                     "forecast_ref_time": forecast_ref_time,
                     "step": 0,
                     "key": "key1",
                     "processed": False,
                 },
                 {
+                    "row_id": 2,
                     "forecast_ref_time": forecast_ref_time,
                     "step": 0,
                     "key": "key2",
                     "processed": False,
                 },
                 {
+                    "row_id": 3,
                     "forecast_ref_time": forecast_ref_time,
                     "step": 3,
                     "key": "key3",
@@ -45,18 +48,20 @@ forecast_ref_time = dt.strptime("202406180000", "%Y%m%d%H%M")
         # Case 2: Not enough zero steps
         (
             [
-                IFSForecast(forecast_ref_time, 0, "key1", False),
-                IFSForecast(forecast_ref_time, 3, "key2", False),
+                IFSForecast(0, forecast_ref_time, 0, "key1", False),
+                IFSForecast(1, forecast_ref_time, 3, "key2", False),
             ],
-            IFSForecast(forecast_ref_time, 3, "key2", False),
+            IFSForecast(1, forecast_ref_time, 3, "key2", False),
             [
                 {
+                    "row_id": 0,
                     "forecast_ref_time": forecast_ref_time,
                     "step": 0,
                     "key": "key1",
                     "processed": False,
                 },
                 {
+                    "row_id": 1,
                     "forecast_ref_time": forecast_ref_time,
                     "step": 3,
                     "key": "key2",
