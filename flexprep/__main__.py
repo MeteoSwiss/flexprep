@@ -44,9 +44,10 @@ def create_ifs_forecast_obj(args):
             forecast_year = current_year
 
         # Combine date and time to create forecast_ref_time
-        forecast_ref_time_str = f"{forecast_year}{args.date}{args.time[:4]}"
+        forecast_ref_time_str = f"{forecast_year}{args.date}{args.time}"
         forecast_ref_time = dt.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
         return IFSForecast(
+            row_id=None,
             forecast_ref_time=forecast_ref_time,
             step=args.step,
             key=Path(args.location).name,
