@@ -100,7 +100,7 @@ class Processing:
             _LOGGER.exception(f"Data loading and validation failed: {e}")
             raise
 
-        finally:
+        else:
             # Ensure temporary files are cleaned up
             for temp_file in temp_files:
                 os.unlink(temp_file)

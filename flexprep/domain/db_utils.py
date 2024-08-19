@@ -21,7 +21,7 @@ class DB:
         except sqlite3.Error as e:
             _LOGGER.exception(f"An error occurred: {e}")
             raise
-        finally:
+        else:
             _LOGGER.info("Database setup complete.")
 
     def _initialize_db(self) -> None:
