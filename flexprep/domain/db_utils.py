@@ -1,6 +1,5 @@
 import logging
 import sqlite3
-from datetime import datetime as dt
 
 from flexprep import CONFIG
 from flexprep.domain.data_model import IFSForecast
@@ -28,10 +27,12 @@ class DB:
         """Create tables if they do not exist."""
         create_table_query = """
         CREATE TABLE IF NOT EXISTS uploaded (
+            row_id INTEGER PRIMARY KEY AUTOINCREMENT,
             forecast_ref_time TEXT NOT NULL,
             step INTEGER NOT NULL,
             key TEXT NOT NULL,
             processed BOOLEAN NOT NULL
+            UNIQUE(forecast_ref_time, step, key)
         )
         """
         try:
@@ -69,7 +70,7 @@ class DB:
         """
 
         query = (
-            "SELECT forecast_ref_time, step, key, processed "
+            "SELECT row_id, forecast_ref_time, step, key, processed "
             "FROM uploaded "
             "WHERE forecast_ref_time = ?"
         )
@@ -79,13 +80,13 @@ class DB:
                 cursor = self.conn.execute(query, (forecast_ref_time,))
                 rows = cursor.fetchall()
                 _LOGGER.info(f"Query returned {len(rows)} items.")
-
                 results = [
                     IFSForecast(
-                        forecast_ref_time=row[0],
-                        step=row[1],
-                        key=row[2],
-                        processed=row[3],
+                        row_id=row[0],
+                        forecast_ref_time=row[1],
+                        step=row[2],
+                        key=row[3],
+                        processed=row[4],
                     )
                     for row in rows
                 ]
@@ -95,9 +96,7 @@ class DB:
             _LOGGER.exception(f"An error occurred while querying the database: {e}")
             raise
 
-    def update_item_as_processed(
-        self, forecast_ref_time: dt, step: int, key: str
-    ) -> None:
+    def update_item_as_processed(self, row_id: int) -> None:
         """Update the 'processed' field of a specific item to True."""
         try:
             with self.conn:
@@ -105,9 +104,9 @@ class DB:
                     """
                     UPDATE uploaded
                     SET processed = 1
-                    WHERE forecast_ref_time = ? AND step = ? AND key = ?
+                    WHERE row_id = ?
                 """,
-                    (forecast_ref_time, step, key),
+                    (row_id,),
                 )
                 if result.rowcount > 0:
                     _LOGGER.info("Item marked as processed.")

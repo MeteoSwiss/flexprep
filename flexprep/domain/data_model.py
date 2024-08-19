@@ -5,6 +5,7 @@ from datetime import datetime
 
 @dataclass
 class IFSForecast:
+    row_id: int
     forecast_ref_time: datetime
     step: int
     key: str
