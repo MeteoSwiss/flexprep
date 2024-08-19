@@ -25,14 +25,14 @@ class Processing:
         result = self._sort_and_download_files(file_objs)
         if result is None:
             _LOGGER.exception("Failed to sort and download files.")
-            return
+            raise
 
         temp_files, to_process, prev_file = result
 
         ds_in = self._load_and_validate_data(temp_files, to_process, prev_file)
         if ds_in is None:
             _LOGGER.exception("Failed to load and validate data.")
-            return
+            raise
 
         ds_out = self._apply_flexpart(ds_in)
         self._save_output(
@@ -98,7 +98,7 @@ class Processing:
 
         except Exception as e:
             _LOGGER.exception(f"Data loading and validation failed: {e}")
-            return None
+            raise
 
         finally:
             # Ensure temporary files are cleaned up
@@ -145,3 +145,4 @@ class Processing:
 
         except Exception as e:
             _LOGGER.exception(f"Failed to save or upload output file: {e}")
+            raise

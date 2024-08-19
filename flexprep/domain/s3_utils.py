@@ -82,3 +82,4 @@ class S3client:
             _LOGGER.info(f"Uploaded file to S3: {key}")
         except ClientError as e:
             _LOGGER.exception(f"Error uploading file {local_path}: {e}")
+            raise

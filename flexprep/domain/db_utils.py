@@ -20,6 +20,7 @@ class DB:
             self._initialize_db()
         except sqlite3.Error as e:
             _LOGGER.exception(f"An error occurred: {e}")
+            raise
         finally:
             _LOGGER.info("Database setup complete.")
 
@@ -39,6 +40,7 @@ class DB:
                 _LOGGER.info("Table uploaded is ready.")
         except sqlite3.Error as e:
             _LOGGER.exception(f"An error occurred while initializing the database: {e}")
+            raise
 
     def insert_item(self, item: IFSForecast) -> None:
         """Insert a single item into the 'uploaded' table."""
@@ -54,6 +56,7 @@ class DB:
             _LOGGER.info("Data inserted successfully.")
         except sqlite3.Error as e:
             _LOGGER.exception(f"An error occurred while inserting data: {e}")
+            raise
 
     def query_table(self, forecast_ref_time: str) -> list[IFSForecast]:
         """Query the table for items with a specific forecast_ref_time.
@@ -90,7 +93,7 @@ class DB:
 
         except sqlite3.Error as e:
             _LOGGER.exception(f"An error occurred while querying the database: {e}")
-            return []
+            raise
 
     def update_item_as_processed(
         self, forecast_ref_time: dt, step: int, key: str
@@ -112,3 +115,4 @@ class DB:
                     _LOGGER.warning("No item found to update.")
         except sqlite3.Error as e:
             _LOGGER.exception(f"An error occurred while updating the item: {e}")
+            raise
