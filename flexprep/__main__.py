@@ -9,6 +9,8 @@ from pathlib import Path
 from flexprep.domain.data_model import IFSForecast
 from flexprep.domain.prepare_processing import launch_pre_processing
 
+_LOGGER = logging.getLogger(__name__)
+
 
 def parse_arguments():
     """Parse and return command-line arguments."""
@@ -28,6 +30,7 @@ def parse_arguments():
 def create_ifs_forecast_obj(args):
     """Create an IFSForecast object based on the parsed arguments."""
     try:
+        # year is missing from "time" in dess. products so retrieve it
         # Get the current year and month
         now = dt.now()
         current_year = now.year
@@ -54,16 +57,15 @@ def create_ifs_forecast_obj(args):
             processed=False,
         )
     except Exception as e:
-        logging.error(f"Error creating IFSForecast object: {e}")
+        _LOGGER.error(f"Error creating IFSForecast object: {e}")
         sys.exit(1)
 
 
 if __name__ == "__main__":
     """Main function to parse arguments and process the IFS forecast."""
-    logging.basicConfig(level=logging.INFO)
 
     args = parse_arguments()
-    logging.info(
+    _LOGGER.info(
         f"Notification received for file - "
         f"Step: {args.step}, Date: {args.date}, "
         f"Time: {args.time}, Location: {args.location}"

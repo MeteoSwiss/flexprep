@@ -10,6 +10,8 @@ from botocore.exceptions import ClientError
 
 from flexprep import CONFIG
 
+_LOGGER = logging.getLogger(__name__)
+
 FileObject = dict[str, typing.Any]
 
 
@@ -31,11 +33,11 @@ class S3client:
         try:
             s3_objects = s3_client.list_objects_v2(Bucket=bucket_name)
             if "Contents" not in s3_objects:
-                logging.error(f"No objects found in bucket {bucket_name}")
+                _LOGGER.exception(f"No objects found in bucket {bucket_name}")
                 raise ValueError(f"No objects found in bucket {bucket_name}")
-            logging.debug(f"The bucket {bucket_name} is not empty.")
+            _LOGGER.debug(f"The bucket {bucket_name} is not empty.")
         except Exception as e:
-            logging.error(f"Error checking S3 bucket content: {e}")
+            _LOGGER.exception(f"Error checking S3 bucket content: {e}")
             raise e
 
     def _create_s3_client(
@@ -60,13 +62,13 @@ class S3client:
                 temp_file.name,
                 Config=TransferConfig(multipart_threshold=5 * 1024**3),
             )
-            logging.info(
+            _LOGGER.info(
                 f"Downloaded file from S3 to temporary file: {file_info['key']}"
             )
             file_info["temp_file"] = temp_file.name
             return temp_file.name
         except ClientError as e:
-            logging.error(
+            _LOGGER.exception(
                 f"Error downloading file {file_info['key']} to temporary file: {e}"
             )
             raise e
@@ -77,6 +79,6 @@ class S3client:
             self.s3_client_output.upload_file(
                 local_path, CONFIG.main.s3_buckets.output.name, key
             )
-            logging.info(f"Uploaded file to S3: {key}")
+            _LOGGER.info(f"Uploaded file to S3: {key}")
         except ClientError as e:
-            logging.error(f"Error uploading file {local_path}: {e}")
+            _LOGGER.exception(f"Error uploading file {local_path}: {e}")

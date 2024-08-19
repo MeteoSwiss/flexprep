@@ -4,13 +4,15 @@ from flexprep import CONFIG
 from flexprep.domain.db_utils import DB
 from flexprep.domain.processing import Processing
 
+_LOGGER = logging.getLogger(__name__)
+
 
 def launch_pre_processing(ifs_forecast_obj):
     db = DB()
 
     # Insert the forecast object into the database
     db.insert_item(ifs_forecast_obj)
-    logging.info(
+    _LOGGER.info(
         f"Put item ({ifs_forecast_obj.forecast_ref_time}, "
         f"{ifs_forecast_obj.step}, {ifs_forecast_obj.key}) succeeded."
     )
@@ -28,7 +30,7 @@ def launch_pre_processing(ifs_forecast_obj):
             f"Currently only {len(step_zero_items)} step=0 files are available. "
             "Waiting for these before processing."
         )
-        logging.info(message)
+        _LOGGER.info(message)
         return
 
     # Check if the step is aligned with the configured time increment
@@ -40,14 +42,14 @@ def launch_pre_processing(ifs_forecast_obj):
     # Check if the previous step exists
     # or if the current object has already been processed
     if prev_step not in steps or ifs_forecast_obj.processed:
-        logging.info(
+        _LOGGER.info(
             f"Not launching Pre-Processing for timestep {step}: "
             f"prev_step in steps: {prev_step in steps}, "
             f"processed: {ifs_forecast_obj.processed == True}"
         )
         return
 
-    logging.info(f"Launching Pre-Processing for timestep {step}")
+    _LOGGER.info(f"Launching Pre-Processing for timestep {step}")
 
     # Process items for the current and previous step, including step-zero items
     process_items = step_zero_items + [ifs_forecast_obj.to_dict()]
@@ -59,7 +61,7 @@ def launch_pre_processing(ifs_forecast_obj):
             process_items.append(prev_obj)
         else:
             msg = f"Cannot find file for previous step {prev_step}"
-            logging.error(msg)
+            _LOGGER.exception(msg)
             raise ValueError(msg)
 
     Processing().process(process_items)

@@ -12,6 +12,8 @@ from flexprep.domain.flexpart_utils import CONSTANTS, INPUT_FIELDS, prepare_outp
 from flexprep.domain.s3_utils import S3client
 from flexprep.domain.validation_utils import validate_dataset
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class Processing:
     FileObject = dict[str, typing.Any]
@@ -22,14 +24,14 @@ class Processing:
     def process(self, file_objs: list[FileObject]) -> None:
         result = self._sort_and_download_files(file_objs)
         if result is None:
-            logging.error("Failed to sort and download files.")
+            _LOGGER.exception("Failed to sort and download files.")
             return
 
         temp_files, to_process, prev_file = result
 
         ds_in = self._load_and_validate_data(temp_files, to_process, prev_file)
         if ds_in is None:
-            logging.error("Failed to load and validate data.")
+            _LOGGER.exception("Failed to load and validate data.")
             return
 
         ds_out = self._apply_flexpart(ds_in)
@@ -61,7 +63,7 @@ class Processing:
             return tempfiles, to_process, prev_file
 
         except Exception as e:
-            logging.error(f"Sorting and validation failed: {e}")
+            _LOGGER.exception(f"Sorting and validation failed: {e}")
             return None
 
     def _download_files(self, files_to_download: list[FileObject]) -> list[str]:
@@ -71,7 +73,7 @@ class Processing:
                 self.s3_client.download_file(file_obj) for file_obj in files_to_download
             ]
         except Exception as e:
-            logging.error(f"File download failed: {e}")
+            _LOGGER.exception(f"File download failed: {e}")
             raise RuntimeError("An error occurred while downloading files.") from e
 
     def _load_and_validate_data(
@@ -95,7 +97,7 @@ class Processing:
             return ds_in
 
         except Exception as e:
-            logging.error(f"Data loading and validation failed: {e}")
+            _LOGGER.exception(f"Data loading and validation failed: {e}")
             return None
 
         finally:
@@ -130,7 +132,7 @@ class Processing:
                 with open(output_file.name, "wb") as fout:
                     for name, field in ds_out.items():
                         if field.attrs.get("v_coord") == "hybrid":
-                            logging.info(f"Writing GRIB fields to {output_file.name}")
+                            _LOGGER.info(f"Writing GRIB fields to {output_file.name}")
                             grib_decoder.save(field, fout)
 
             # Upload the file to S3
@@ -142,4 +144,4 @@ class Processing:
             )
 
         except Exception as e:
-            logging.error(f"Failed to save or upload output file: {e}")
+            _LOGGER.exception(f"Failed to save or upload output file: {e}")

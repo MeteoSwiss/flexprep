@@ -5,6 +5,8 @@ from datetime import datetime as dt
 from flexprep import CONFIG
 from flexprep.domain.data_model import IFSForecast
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class DB:
     conn: sqlite3.Connection
@@ -14,12 +16,12 @@ class DB:
             """Establish a database connection."""
             self.db_path = CONFIG.main.db_path
             self.conn = sqlite3.connect(self.db_path)
-            logging.info("Connected to database.")
+            _LOGGER.info("Connected to database.")
             self._initialize_db()
         except sqlite3.Error as e:
-            logging.error(f"An error occurred: {e}")
+            _LOGGER.exception(f"An error occurred: {e}")
         finally:
-            logging.info("Database setup complete.")
+            _LOGGER.info("Database setup complete.")
 
     def _initialize_db(self) -> None:
         """Create tables if they do not exist."""
@@ -34,9 +36,9 @@ class DB:
         try:
             with self.conn:
                 self.conn.execute(create_table_query)
-                logging.info("Table uploaded is ready.")
+                _LOGGER.info("Table uploaded is ready.")
         except sqlite3.Error as e:
-            logging.error(f"An error occurred while initializing the database: {e}")
+            _LOGGER.exception(f"An error occurred while initializing the database: {e}")
 
     def insert_item(self, item: IFSForecast) -> None:
         """Insert a single item into the 'uploaded' table."""
@@ -49,9 +51,9 @@ class DB:
                 """,
                     (item.forecast_ref_time, item.step, item.key, item.processed),
                 )
-            logging.info("Data inserted successfully.")
+            _LOGGER.info("Data inserted successfully.")
         except sqlite3.Error as e:
-            logging.error(f"An error occurred while inserting data: {e}")
+            _LOGGER.exception(f"An error occurred while inserting data: {e}")
 
     def query_table(self, forecast_ref_time: str) -> list[IFSForecast]:
         """Query the table for items with a specific forecast_ref_time.
@@ -73,7 +75,7 @@ class DB:
             with self.conn:
                 cursor = self.conn.execute(query, (forecast_ref_time,))
                 rows = cursor.fetchall()
-                logging.info(f"Query returned {len(rows)} items.")
+                _LOGGER.info(f"Query returned {len(rows)} items.")
 
                 results = [
                     IFSForecast(
@@ -87,7 +89,7 @@ class DB:
                 return results
 
         except sqlite3.Error as e:
-            logging.error(f"An error occurred while querying the database: {e}")
+            _LOGGER.exception(f"An error occurred while querying the database: {e}")
             return []
 
     def update_item_as_processed(
@@ -105,8 +107,8 @@ class DB:
                     (forecast_ref_time, step, key),
                 )
                 if result.rowcount > 0:
-                    logging.info("Item marked as processed.")
+                    _LOGGER.info("Item marked as processed.")
                 else:
-                    logging.warning("No item found to update.")
+                    _LOGGER.warning("No item found to update.")
         except sqlite3.Error as e:
-            logging.error(f"An error occurred while updating the item: {e}")
+            _LOGGER.exception(f"An error occurred while updating the item: {e}")
