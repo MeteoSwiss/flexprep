@@ -39,7 +39,7 @@ class Processing:
             ds_out,
             to_process["forecast_ref_time"],
             int(to_process["step"]),
-            to_process["key"],
+            to_process["row_id"],
         )
 
     def _sort_and_download_files(
@@ -116,7 +116,7 @@ class Processing:
         ds_out: typing.Any,
         forecast_ref_time: dt,
         step_to_process: int,
-        key_to_process: str,
+        row_id: int,
     ) -> None:
         """Save processed data to a temporary file and upload to output-S3."""
         forecast_ref_time_str = forecast_ref_time.strftime("%Y%m%d%H%M")
@@ -126,7 +126,6 @@ class Processing:
 
             with tempfile.NamedTemporaryFile(
                 suffix=key,
-                delete=False,
             ) as output_file:
                 # Write data to the temporary file
                 with open(output_file.name, "wb") as fout:
@@ -135,13 +134,11 @@ class Processing:
                             _LOGGER.info(f"Writing GRIB fields to {output_file.name}")
                             grib_decoder.save(field, fout)
 
-            # Upload the file to S3
-            S3client().upload_file(output_file.name, key=key)
+                    # Upload the file to S3
+                    S3client().upload_file(output_file.name, key=key)
 
             # Mark the item as processed if everything was successful
-            DB().update_item_as_processed(
-                forecast_ref_time, step_to_process, key_to_process
-            )
+            DB().update_item_as_processed(row_id)
 
         except Exception as e:
             _LOGGER.exception(f"Failed to save or upload output file: {e}")
