@@ -16,12 +16,8 @@ def parse_arguments():
     """Parse and return command-line arguments."""
     parser = argparse.ArgumentParser(description="Parse metadata of new file received")
     parser.add_argument("--step", type=int, required=True, help="Step argument")
-    parser.add_argument(
-        "--date", type=str, required=True, help="Date argument (YYYY-MM-DD)"
-    )
-    parser.add_argument(
-        "--time", type=str, required=True, help="Time argument (HH:MM:SS)"
-    )
+    parser.add_argument("--date", type=str, required=True, help="Date argument (mmdd)")
+    parser.add_argument("--time", type=str, required=True, help="Time argument (HHMM)")
     parser.add_argument("--location", type=str, required=True, help="Location argument")
 
     return parser.parse_args()
