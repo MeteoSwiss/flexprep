@@ -2,7 +2,7 @@ import logging
 import typing
 from typing import Any
 
-_LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 FileObject = dict[str, Any]
 
@@ -44,7 +44,7 @@ def prepare_output(
     for field in ds_out:
         ds_out[field] = ds_out[field].isel(lead_time=slice(-1, None)).squeeze()
     for field in missing_fields:
-        _LOGGER.warning(f"Field '{field}' not found in output")
+        logger.warning(f"Field '{field}' not found in output")
         ds_out[field] = ds_in[field].isel(lead_time=slice(-1, None)).squeeze()
     for field in missing_const:
         ds_out[field] = ds_in[field].squeeze()

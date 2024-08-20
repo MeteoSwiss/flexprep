@@ -9,7 +9,7 @@ from pathlib import Path
 from flexprep.domain.data_model import IFSForecast
 from flexprep.domain.prepare_processing import launch_pre_processing
 
-_LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def parse_arguments():
@@ -54,7 +54,7 @@ def create_ifs_forecast_obj(args):
             processed=False,
         )
     except Exception as e:
-        _LOGGER.error(f"Error creating IFSForecast object: {e}")
+        logger.error(f"Error creating IFSForecast object: {e}")
         sys.exit(1)
 
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     """Main function to parse arguments and process the IFS forecast."""
 
     args = parse_arguments()
-    _LOGGER.info(
+    logger.info(
         f"Notification received for file - "
         f"Step: {args.step}, Date: {args.date}, "
         f"Time: {args.time}, Location: {args.location}"
