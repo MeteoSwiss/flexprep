@@ -20,6 +20,7 @@ class TimeSettings(BaseModel):
 
 class AppSettings(BaseModel):
     app_name: str
+    db_path: str
     s3_buckets: S3Buckets
     time_settings: TimeSettings
 

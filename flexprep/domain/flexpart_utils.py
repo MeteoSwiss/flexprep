@@ -2,7 +2,32 @@ import logging
 import typing
 from typing import Any
 
+logger = logging.getLogger(__name__)
+
 FileObject = dict[str, Any]
+
+# Define constants and input fields for pre-flexpart
+CONSTANTS = {"z", "lsm", "sdor"}
+INPUT_FIELDS = {
+    "u",
+    "v",
+    "etadot",
+    "t",
+    "q",
+    "sp",
+    "10u",
+    "10v",
+    "2t",
+    "2d",
+    "tcc",
+    "sd",
+    "cp",
+    "lsp",
+    "ssr",
+    "sshf",
+    "ewss",
+    "nsss",
+}
 
 
 def prepare_output(
@@ -17,10 +42,10 @@ def prepare_output(
     missing_const = (ds_in.keys() & constant_fields) - ds_out.keys()
 
     for field in ds_out:
-        ds_out[field] = ds_out[field].isel(time=slice(-1, None)).squeeze()
+        ds_out[field] = ds_out[field].isel(lead_time=slice(-1, None)).squeeze()
     for field in missing_fields:
-        logging.warning(f"Field '{field}' not found in output")
-        ds_out[field] = ds_in[field].isel(time=slice(-1, None)).squeeze()
+        logger.warning(f"Field '{field}' not found in output")
+        ds_out[field] = ds_in[field].isel(lead_time=slice(-1, None)).squeeze()
     for field in missing_const:
         ds_out[field] = ds_in[field].squeeze()
 

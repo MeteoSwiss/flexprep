@@ -20,7 +20,8 @@ COPY flexprep /src/app-root/flexprep
 
 WORKDIR /src/app-root
 
-CMD ["python", "-m", "flexprep"]
+RUN mkdir -p \
+    /src/app-root/db
 
 FROM base AS tester
 
@@ -49,4 +50,4 @@ ENV VERSION=$VERSION
 # uid 1001 is defined in the base-container-images for this purpose
 USER 1001
 
-CMD ["python", "-m", "flexprep"]
+ENTRYPOINT ["python", "-m", "flexprep"]
