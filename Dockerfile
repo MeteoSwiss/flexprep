@@ -1,53 +1,60 @@
+# Stage 1: Builder
 FROM dockerhub.apps.cp.meteoswiss.ch/mch/python/builder:latest as builder
 
-COPY poetry.lock pyproject.toml /src/app-root/
+COPY poetry.lock pyproject.toml /src/
 
-RUN cd /src/app-root \
+RUN cd /src \
     && poetry export -o requirements.txt --without-hashes \
     && poetry export --dev -o requirements_dev.txt --without-hashes
 
-
+# Stage 2: Base Image
 FROM dockerhub.apps.cp.meteoswiss.ch/mch/python-3.11:latest-slim AS base
 
-COPY --from=builder /src/app-root/requirements.txt /src/app-root/requirements.txt
+COPY --from=builder /src/requirements.txt /src/requirements.txt
 
 RUN apt-get -yqq update && apt-get install -yqq wget libeccodes-dev
 
-RUN cd /src/app-root \
+RUN cd /src \
     && pip install -r requirements.txt
 
-COPY flexprep /src/app-root/flexprep
+COPY flexprep /src/flexprep
 
-WORKDIR /src/app-root
+WORKDIR /src
 
-RUN mkdir -p \
-    /src/app-root/db
+RUN mkdir -p /src/db
 
+# Stage 3: Tester
 FROM base AS tester
 
-COPY --from=builder /src/app-root/requirements_dev.txt /src/app-root/requirements_dev.txt
-RUN pip install -r /src/app-root/requirements_dev.txt
+COPY --from=builder /src/requirements_dev.txt /src/requirements_dev.txt
+RUN pip install -r /src/requirements_dev.txt
 
+COPY pyproject.toml test_ci.sh /src/
+COPY test /src/test
 
-COPY pyproject.toml test_ci.sh /src/app-root/
-COPY test /src/app-root/test
+CMD ["/bin/bash", "-c", "source /src/test_ci.sh && run_ci_tools"]
 
-CMD ["/bin/bash", "-c", "source /src/app-root/test_ci.sh && run_ci_tools"]
-
+# Stage 4: Documenter
 FROM tester AS documenter
 
-COPY doc /src/app-root/doc
-COPY HISTORY.rst README.rst /src/app-root/
+COPY doc /src/doc
+COPY HISTORY.rst README.rst /src/
 
 CMD ["sphinx-build", "doc", "doc/_build"]
 
+# Stage 5: Runner
 FROM base AS runner
 
 ARG VERSION
 ENV VERSION=$VERSION
 
-# For running outside of OpenShift, we want to make sure that the container is run without root privileges
-# uid 1001 is defined in the base-container-images for this purpose
-USER 1001
+# Create a non-root user and set up permissions
+RUN useradd --create-home --home-dir /src flexprep-user
+
+# Ensure the home directory has the correct permissions
+RUN chmod -R 700 /src
+
+# Switch to the non-root user
+USER flexprep-user
 
 ENTRYPOINT ["python", "-m", "flexprep"]
