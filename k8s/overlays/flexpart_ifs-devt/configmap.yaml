@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: flexprep-settings
-data:
-  logging_level: 'DEBUG'
