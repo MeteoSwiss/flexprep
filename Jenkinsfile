@@ -58,7 +58,7 @@ pipeline {
     agent { label 'podman' }
 
     parameters {
-        choice(choices: ['Build', 'Publish Artifacts' 'Deploy', 'Release', 'Restart', 'Delete', 'Trivy-Scan'],
+        choice(choices: ['Build', 'Publish Artifacts', 'Deploy', 'Release', 'Restart', 'Delete', 'Trivy-Scan'],
             description: 'Build type',
             name: 'buildChoice')
 
