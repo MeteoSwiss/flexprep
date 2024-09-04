@@ -5,18 +5,16 @@ listeners:
       class: od
       expver: 0001
       domain: g
-      stream: oper
+      stream: [oper, scda]
     triggers:
       - type: command
-        working_dir: "$HOME"
+        working_dir: $HOME
         command: >
-          docker run \
-            --mount type=bind,source=$HOME/.sqlite/,destination=/src/app-root/db/
-            --env-file .env \
-            493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep:2408.8a89852bd0a76e1930ea53b992c5035423d91485 \
+          .aviso/run_docker_script.sh \
             --step "${request.step}" \
             --date "${request.date}" \
             --time "${request.time}" \
             --location "${location}"
       - type: log
         path: /home/nburgdor/avisoLog.log
+
