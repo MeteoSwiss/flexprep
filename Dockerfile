@@ -49,10 +49,9 @@ ARG VERSION
 ENV VERSION=$VERSION
 
 # Create a non-root user and set up permissions
-RUN useradd --create-home --home-dir /src flexprep-user
+RUN useradd --create-home flexprep-user
 
 # Ensure the home directory has the correct permissions
-RUN chmod -R 700 /src
 RUN chown -R flexprep-user:flexprep-user /src
 
 # Switch to the non-root user
