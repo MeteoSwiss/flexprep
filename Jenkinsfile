@@ -18,6 +18,9 @@ class Globals {
     // sets the pipeline to execute all steps related to releasing the service
     static boolean release = false
 
+    // sets the pipeline to execute all steps related to create and publish artifacts
+    static boolean publishArtifacts = false
+
     // sets the pipeline to execute all steps related to deployment of the service
     static boolean deploy = false
 
@@ -55,7 +58,7 @@ pipeline {
     agent { label 'podman' }
 
     parameters {
-        choice(choices: ['Build', 'Deploy', 'Release', 'Restart', 'Delete', 'Trivy-Scan'],
+        choice(choices: ['Build', 'Publish Artifacts' 'Deploy', 'Release', 'Restart', 'Delete', 'Trivy-Scan'],
             description: 'Build type',
             name: 'buildChoice')
 
@@ -104,6 +107,9 @@ pipeline {
                         case 'Build':
                             Globals.build = true
                             break
+                        case 'Publish Artifacts':
+                            Globals.publishArtifacts = true
+                            break
                         case 'Deploy':
                             Globals.deploy = true
                             break
@@ -126,7 +132,7 @@ pipeline {
                         runDevScript("build/pymch-release.sh ${params.version}")
                     }
 
-                    if (Globals.build || Globals.deploy || Globals.runTrivyScan) {
+                    if (Globals.build || Globals.publishArtifacts || Globals.deploy || Globals.runTrivyScan) {
                         echo 'Starting with calulating version'
                         def shortBranchName = env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "").take(30).toLowerCase()
                         try {
@@ -202,10 +208,10 @@ pipeline {
         }
 
         stage('Create Artifacts') {
-            when { expression { Globals.build || Globals.deploy || params.PUBLISH_DOCUMENTATION } }
+            when { expression { Globals.build || Globals.publishArtifacts || Globals.deploy || params.PUBLISH_DOCUMENTATION } }
             steps {
                 script {
-                    if (expression { Globals.build || Globals.deploy }) {
+                    if (expression { Globals.build || Globals.publishArtifacts ||  Globals.deploy }) {
                         echo "---- CREATE IMAGE ----"
                         sh """
                         podman build --pull --target runner --build-arg VERSION=${Globals.version} -t ${Globals.imageTagIntern} .
@@ -227,13 +233,13 @@ pipeline {
         }
 
         stage('Publish Artifacts') {
-            when { expression { Globals.deploy || params.PUBLISH_DOCUMENTATION } }
+            when { expression { Globals.publishArtifacts || Globals.deploy || params.PUBLISH_DOCUMENTATION } }
             environment {
                 PATH = "$HOME/tools/openshift-client-tools:$PATH"
             }
             steps {
                 script {
-                    if (expression { Globals.deploy }) {
+                    if (expression { Globals.publishArtifacts || Globals.deploy }) {
                         echo "---- PUBLISH IMAGE ----"
                         withCredentials([usernamePassword(credentialsId: 'openshift-nexus',
                             passwordVariable: 'NXPASS', usernameVariable: 'NXUSER')]) {
