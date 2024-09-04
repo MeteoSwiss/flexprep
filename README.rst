@@ -1,7 +1,7 @@
 # FlexPrep
 ### Container which pre-processes IFS data for [Flexpart](https://www.flexpart.eu/) in the European Weather Cloud ([EWC](https://europeanweather.cloud/)).
 
-FlexPrep is part of an automated system triggered by product dissemination via [ECPDS](https://confluence.ecmwf.int/pages/viewpage.action?pageId=228871373) using [Aviso](https://confluence.ecmwf.int/display/EWCLOUDKB/Aviso+Notification+System+on+EWC). This setup ensures that data processing is initiated automatically when new data is available. For detailed instructions on configuring and setting up Aviso for this system, please refer to the [aviso/ folder in this repository](https://github.com/MeteoSwiss-APN/flexprep/blob/main/aviso/README.md).
+FlexPrep is part of an automated system triggered by product dissemination via [ECPDS](https://confluence.ecmwf.int/pages/viewpage.action?pageId=228871373) using [Aviso](https://confluence.ecmwf.int/display/EWCLOUDKB/Aviso+Notification+System+on+EWC). This setup ensures that data processing is initiated automatically when new data is available. For detailed instructions on configuring and setting up Aviso for this system, please refer to the [aviso folder in this repository.](https://github.com/MeteoSwiss-APN/flexprep/blob/main/aviso/README.md).
 
 
 ## Setup Instructions for VM on EWC
