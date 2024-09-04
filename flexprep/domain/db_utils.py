@@ -31,7 +31,7 @@ class DB:
             forecast_ref_time TEXT NOT NULL,
             step INTEGER NOT NULL,
             key TEXT NOT NULL,
-            processed BOOLEAN NOT NULL
+            processed BOOLEAN NOT NULL,
             UNIQUE(forecast_ref_time, step, key)
         )
         """
