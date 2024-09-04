@@ -56,6 +56,5 @@ RUN chown -R flexprep-user:flexprep-user /src
 
 # Switch to the non-root user
 USER flexprep-user
-ENV USER=flexprep-user
 
 ENTRYPOINT ["python", "-m", "flexprep"]
