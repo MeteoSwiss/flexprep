@@ -40,6 +40,8 @@ done
 echo Notification received for file $LOCATION, date $DATE, time $TIME, step $STEP
 
 # Run the Docker container
+# Note: The tag of the Docker image (after the colon ':') is manually updated here 
+# after each push to reflect the latest version of the image.
 docker run \
   --mount type=bind,source="$HOME/.sqlite/",destination=/src/app-root/db/ \
   --env-file .env \
