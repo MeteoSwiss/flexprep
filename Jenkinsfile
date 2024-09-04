@@ -155,7 +155,7 @@ pipeline {
                 mkdir -p test_reports
                 """
                 echo "Starting with unit-testing including coverage"
-                sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_tests_with_coverage'"
+                sh "podman run --rm -v \$(pwd)/test_reports:/src/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_tests_with_coverage'"
 
             }
             post {
@@ -171,11 +171,11 @@ pipeline {
             steps {
                 script {
                     echo("---- LYNT ----")
-                    sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_pylint'"
+                    sh "podman run --rm -v \$(pwd)/test_reports:/src/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_pylint'"
 
                     try {
                         echo("---- TYPING CHECK ----")
-                        sh "podman run --rm -v \$(pwd)/test_reports:/src/app-root/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_mypy'"
+                        sh "podman run --rm -v \$(pwd)/test_reports:/src/test_reports ${Globals.imageTagIntern}-tester sh -c '. ./test_ci.sh && run_mypy'"
                         recordIssues(qualityGates: [[threshold: 10, type: 'TOTAL', unstable: false]], tools: [myPy(pattern: 'test_reports/mypy.log')])
                     }
                     catch (err) {
@@ -219,7 +219,7 @@ pipeline {
                         sh """
                         podman build --pull --build-arg VERSION=${Globals.version} --target documenter -t ${Globals.imageTagIntern}-documenter .
                         mkdir -p doc/_build
-                        podman run -v \$(pwd)/doc/_build:/src/app-root/doc/_build --rm ${Globals.imageTagIntern}-documenter
+                        podman run -v \$(pwd)/doc/_build:/src/doc/_build --rm ${Globals.imageTagIntern}-documenter
                         """
                     }
                 }

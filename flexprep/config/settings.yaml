@@ -7,7 +7,7 @@ logging:
     mch_python_commons: DEBUG
 main:
   app_name: FlexPrep
-  db_path: /src/app-root/db/sqlite3-db
+  db_path: /src/db/sqlite3-db
   s3_buckets:
     input:
       endpoint_url: https://object-store.os-api.cci1.ecmwf.int
