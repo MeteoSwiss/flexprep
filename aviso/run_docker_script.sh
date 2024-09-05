@@ -40,10 +40,10 @@ done
 echo Notification received for file $LOCATION, date $DATE, time $TIME, step $STEP
 
 # Run the Docker container
-# Note: The tag of the Docker image (after the colon ':') is manually updated here 
+# Note: The tag of the Docker image (after the colon ':') is manually updated here
 # after each push to reflect the latest version of the image.
 docker run \
-  --mount type=bind,source="$HOME/.sqlite/",destination=/src/app-root/db/ \
+  --mount type=bind,source="$HOME/.sqlite/",destination=/src/db/ \
   --env-file .env \
   493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep:2409.236bc87543d84233cd91984d61378b3c69511bb4 \
   --step "$STEP" \

@@ -17,4 +17,3 @@ listeners:
             --location "${location}"
       - type: log
         path: /home/nburgdor/avisoLog.log
-

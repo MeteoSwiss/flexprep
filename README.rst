@@ -8,8 +8,8 @@ FlexPrep is part of an automated system triggered by product dissemination via [
 
 To set up the VM for this project, you need to manually add the following files and folders:
 
-1. **VM Data Flavor:**
-    - The VM must be provisioned with the appropriate `data` flavor ([How to provision a new instance on EWC](https://confluence.ecmwf.int/display/EWCLOUDKB/Provision+a+new+instance+-+web)). This ensures that the Aviso package is automatically installed.
+1. **VM on EWC with `-data` layout:**
+    - When provisioning the VM on EWC following these [instructions](https://confluence.ecmwf.int/display/EWCLOUDKB/Provision+a+new+instance+-+web), ensure you select the instance with the `-data` layout (e.g. ubuntu-22.04-data). This ensures that the Aviso package is automatically installed.
 
 
 2. **`.aviso/` Folder**
