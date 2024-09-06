@@ -16,4 +16,4 @@ listeners:
             --time "${request.time}" \
             --location "${location}"
       - type: log
-        path: /home/nburgdor/avisoLog.log
+        path: ~/avisoLog.log
