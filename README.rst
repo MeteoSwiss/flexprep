@@ -1,64 +1,44 @@
-===============
-Getting started
-===============
+# FlexPrep
+### Container which pre-processes IFS data for [Flexpart](https://www.flexpart.eu/) in the European Weather Cloud ([EWC](https://europeanweather.cloud/)).
 
-------------------------------------------------
-Install dependencies & start the service locally
-------------------------------------------------
-
-1. Enter the project folder:
-
-.. code-block:: console
-
-    $ cd flexprep
-
-2. Install packages
-
-.. code-block:: console
-
-    $ poetry install
+FlexPrep is part of an automated system triggered by product dissemination via [ECPDS](https://confluence.ecmwf.int/pages/viewpage.action?pageId=228871373) using [Aviso](https://confluence.ecmwf.int/display/EWCLOUDKB/Aviso+Notification+System+on+EWC). This setup ensures that data processing is initiated automatically when new data is available. For detailed instructions on configuring and setting up Aviso for this system, please refer to the [aviso folder in this repository.](https://github.com/MeteoSwiss-APN/flexprep/blob/main/aviso/README.md).
 
 
-3. Run the job
+## Setup Instructions for VM on EWC
 
-.. code-block:: console
+To set up the VM for this project, you need to manually add the following files and folders:
 
-    $ poetry run python -m flexprep
-
--------------------------------
-Run the tests and quality tools
--------------------------------
-
-1. Run tests
-
-.. code-block:: console
-
-    $ poetry run pytest
-
-2. Run pylint
-
-.. code-block:: console
-
-    $ poetry run pylint flexprep
+1. **VM on EWC with `-data` layout:**
+    - When provisioning the VM on EWC following these [instructions](https://confluence.ecmwf.int/display/EWCLOUDKB/Provision+a+new+instance+-+web), ensure you select the instance with the `-data` layout (e.g. ubuntu-22.04-data). This ensures that the Aviso package is automatically installed.
 
 
-3. Run mypy
-
-.. code-block:: console
-
-    $ poetry run mypy flexprep
+2. **`.aviso/` Folder**
+   - This folder contains configuration and script files required for the AVISO system as described in the `aviso/README.md` file in this repository.
 
 
-----------------------
-Generate documentation
-----------------------
+3. **`.aws/` Folder**
+   - **Description:** This folder contains AWS credentials and configuration files used to authenticate with AWS services.
+   - **Configuration:**
+     - **`credentials` file:** Contains AWS access keys and secret keys.
+       - Example format:
+         ```
+         [default]
+         aws_access_key_id = YOUR_ACCESS_KEY
+         aws_secret_access_key = YOUR_SECRET_KEY
+         ```
+     - **`config` file (optional):** Contains AWS region and output format settings.
+       - Example format:
+         ```
+         [default]
+         region = eu-central-2
+         output = json
+         ```
 
-.. code-block:: console
-
-    $ poetry run sphinx-build doc doc/_build
-
-Then open the index.html file generated in *flexprep/build/sphinx/html*
-
-
-.. HINT::
-   All **poetry run** prefixes in the commands can be avoided if running them within the poetry shell
+4. **`.env` File**
+   - **Description:** This file contains environment variables including S3 bucket access keys and secret keys required by the application.
+   - **Configuration:**
+     - Example format:
+       ```
+       S3_ACCESS_KEY=your-access-key
+       S3_SECRET_KEY=your-secret-key
+       ```

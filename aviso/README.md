@@ -9,8 +9,7 @@ To set up Aviso on the EWC, follow the steps in the documentation:
 
 ## Configuration
 
-1. After creating the `~/.marsrc/mars.email` and `~/.marsrc/mars.token` files as outlined in Section 2.2 of the documentation, save the `config.yaml` and e.g. `listener_diss.yaml` file under `~/.aviso/`.
-2. Ensure the paths in the `config.yaml` file are relevant and exist on your machine.
+Once you've created the `~/.marsrc/mars.email` and `~/.marsrc/mars.token` files as described in Section 2.2 of the documentation, save the `config.yaml`, `listener_diss.yaml`, and `run_docker_script.sh` files from the `aviso/` folder of this repository into the `~/.aviso/` directory of your VM.
 
 ## Running Aviso as a Service
 
