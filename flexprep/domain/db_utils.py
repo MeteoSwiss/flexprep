@@ -44,17 +44,23 @@ class DB:
             raise
 
     def insert_item(self, item: IFSForecast) -> None:
-        """Insert a single item into the 'uploaded' table."""
+        """Insert a single item into the 'uploaded' table and update its row_id."""
         try:
             with self.conn:
-                self.conn.execute(
+                # Insert the item and get the newly inserted row_id
+                result = self.conn.execute(
                     """
                     INSERT INTO uploaded (forecast_ref_time, step, key, processed)
                     VALUES (?, ?, ?, ?)
-                """,
+                    RETURNING row_id
+                    """,
                     (item.forecast_ref_time, item.step, item.key, item.processed),
                 )
-            logger.info("Data inserted successfully.")
+
+                # Fetch the row_id from the result and update the item's row_id
+                item.row_id = result.fetchone()[0]
+
+            logger.info("Data inserted successfully")
         except sqlite3.Error as e:
             logger.exception(f"An error occurred while inserting data: {e}")
             raise
@@ -102,9 +108,9 @@ class DB:
             with self.conn:
                 result = self.conn.execute(
                     """
-                    UPDATE uploaded
-                    SET processed = 1
-                    WHERE row_id = ?
+                UPDATE uploaded
+                SET processed = 1
+                WHERE row_id = ?
                 """,
                     (row_id,),
                 )
