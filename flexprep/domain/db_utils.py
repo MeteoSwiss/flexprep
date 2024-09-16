@@ -108,10 +108,10 @@ class DB:
             with self.conn:
                 result = self.conn.execute(
                     """
-                UPDATE uploaded
-                SET processed = 1
-                WHERE row_id = ?
-                """,
+                    UPDATE uploaded
+                    SET processed = 1
+                    WHERE row_id = ?
+                    """,
                     (row_id,),
                 )
                 if result.rowcount > 0:
