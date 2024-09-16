@@ -34,22 +34,25 @@ def launch_pre_processing(ifs_forecast_obj):
         return
 
     # Check if the step is aligned with the configured time increment
-    step = ifs_forecast_obj.step
-    if (step - CONFIG.main.time_settings.tstart) % CONFIG.main.time_settings.tincr != 0:
+    step_to_process = ifs_forecast_obj.step
+    if (
+        step_to_process - CONFIG.main.time_settings.tstart
+    ) % CONFIG.main.time_settings.tincr != 0:
+        logger.info("Step is not aligned with the configured time increment.")
         return
 
-    prev_step = step - CONFIG.main.time_settings.tincr
+    prev_step = step_to_process - CONFIG.main.time_settings.tincr
     # Check if the previous step exists
     # or if the current object has already been processed
     if prev_step not in steps or ifs_forecast_obj.processed:
         logger.info(
-            f"Not launching Pre-Processing for timestep {step}: "
+            f"Not launching Pre-Processing for timestep {step_to_process}: "
             f"prev_step in steps: {prev_step in steps}, "
             f"processed: {ifs_forecast_obj.processed == True}"
         )
         return
 
-    logger.info(f"Launching Pre-Processing for timestep {step}")
+    logger.info(f"Launching Pre-Processing for timestep {step_to_process}")
 
     # Process items for the current and previous step, including step-zero items
     process_items = step_zero_items + [ifs_forecast_obj.to_dict()]
