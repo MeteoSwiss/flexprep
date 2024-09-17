@@ -48,6 +48,14 @@ FROM base AS runner
 ARG VERSION
 ENV VERSION=$VERSION
 
+# Unset proxy for use outside MCH
+ENV HTTP_PROXY= \
+   http_proxy= \
+   HTTPS_PROXY= \
+   https_proxy= \
+   NO_PROXY= \
+   no_proxy= 
+
 # Create a non-root user and set up permissions
 RUN useradd --create-home flexprep-user
 
