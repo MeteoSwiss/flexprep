@@ -54,7 +54,7 @@ ENV HTTP_PROXY= \
    HTTPS_PROXY= \
    https_proxy= \
    NO_PROXY= \
-   no_proxy= 
+   no_proxy=
 
 # Create a non-root user and set up permissions
 RUN useradd --create-home flexprep-user

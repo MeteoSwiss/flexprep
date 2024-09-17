@@ -15,7 +15,7 @@ To set up the VM for this project, you need to manually add the following files 
 2. `.aviso/` **Folder:** This folder contains configuration and script files required for the AVISO system as described in the `aviso/README.md` file in this repository.
 
 3. `.aws/` **Folder:** This folder contains AWS credentials and configuration files used to authenticate with AWS services.
-    
+
       `credentials` **file:** Contains AWS access keys and secret keys.
 
            .. code-block:: ini
@@ -33,7 +33,7 @@ To set up the VM for this project, you need to manually add the following files 
               output = json
 
 4. `.env` **File:** This file contains environment variables including S3 bucket access keys and secret keys required by the application.
-  
+
        .. code-block:: bash
 
           S3_ACCESS_KEY=your-access-key
