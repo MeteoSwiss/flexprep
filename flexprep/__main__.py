@@ -29,7 +29,7 @@ def create_ifs_forecast_obj(args):
     """Create an IFSForecast object based on the parsed arguments."""
     try:
         # Combine date and time to create forecast_ref_time
-        forecast_ref_time_str = f"{args.date}{args.time}"
+        forecast_ref_time_str = f"{args.date}{args.time:02d}00"
         forecast_ref_time = dt.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
         return IFSForecast(
             row_id=None,
