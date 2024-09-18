@@ -35,7 +35,7 @@ def create_ifs_forecast_obj(args):
         return IFSForecast(
             row_id=None,
             forecast_ref_time=forecast_ref_time,
-            step=args.step,
+            step=int(args.step),
             key=Path(args.location).name,
             processed=False,
         )
