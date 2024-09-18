@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def parse_arguments():
     """Parse and return command-line arguments."""
     parser = argparse.ArgumentParser(description="Parse metadata of new file received")
-    parser.add_argument("--step", type=int, required=True, help="Step argument")
+    parser.add_argument("--step", type=str, required=True, help="Step argument")
     parser.add_argument(
         "--date", type=str, required=True, help="Date argument (yyyymmdd)"
     )
@@ -28,13 +28,14 @@ def parse_arguments():
 def create_ifs_forecast_obj(args):
     """Create an IFSForecast object based on the parsed arguments."""
     try:
+
         # Combine date and time to create forecast_ref_time
-        forecast_ref_time_str = f"{args.date}{args.time}"
+        forecast_ref_time_str = f"{args.date}{int(args.time):02d}00"
         forecast_ref_time = dt.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
         return IFSForecast(
             row_id=None,
             forecast_ref_time=forecast_ref_time,
-            step=args.step,
+            step=int(args.step),
             key=Path(args.location).name,
             processed=False,
         )
