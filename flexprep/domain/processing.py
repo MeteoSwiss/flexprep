@@ -27,14 +27,15 @@ class Processing:
             logger.exception("Failed to sort and download files.")
             raise
 
-        temp_files, to_process, prev_file = result
+        temp_files, to_process, prev_step = result
 
-        ds_in = self._load_and_validate_data(temp_files, to_process, prev_file)
+        ds_in = self._load_and_validate_data(temp_files, to_process, prev_step)
         if ds_in is None:
             logger.exception("Failed to load and validate data.")
             raise
-
+        logger.info("data loading and validation succeeded, now flexpart is applied")
         ds_out = self._apply_flexpart(ds_in)
+        logger.info(" flexpart has been applied successfully")
         self._save_output(
             ds_out,
             to_process["forecast_ref_time"],
@@ -44,7 +45,7 @@ class Processing:
 
     def _sort_and_download_files(
         self, file_objs: list[FileObject]
-    ) -> tuple[list[str], FileObject, FileObject] | None:
+    ) -> tuple[list[str], FileObject, int] | None:
         """Sort file objects, validate, and select files for processing."""
         try:
             sorted_files = sorted(file_objs, key=lambda x: int(x["step"]), reverse=True)
@@ -52,15 +53,22 @@ class Processing:
                 raise ValueError("Not enough files for pre-processing")
 
             to_process = sorted_files[0]
-            prev_file = sorted_files[1]
+            prev_step = sorted_files[1]["step"]
 
-            init_files = (
-                sorted_files[2:4] if int(prev_file["step"]) == 0 else sorted_files[2:4]
+            if prev_step == 0:
+                init_files = sorted_files[1:3]
+            else:
+                prev_file = sorted_files[1]
+                init_files = sorted_files[2:4]
+
+            files_to_download = (
+                [to_process] + init_files
+                if prev_step == 0
+                else [to_process, prev_file] + init_files
             )
-            files_to_download = [to_process, prev_file] + init_files
 
             tempfiles = self._download_files(files_to_download)
-            return tempfiles, to_process, prev_file
+            return tempfiles, to_process, prev_step
 
         except Exception as e:
             logger.exception(f"Sorting and validation failed: {e}")
@@ -77,7 +85,7 @@ class Processing:
             raise RuntimeError("An error occurred while downloading files.") from e
 
     def _load_and_validate_data(
-        self, temp_files: list[str], to_process: FileObject, prev_file: FileObject
+        self, temp_files: list[str], to_process: FileObject, prev_step: int
     ) -> typing.Any:
         """Load and validate data from downloaded files."""
         request = {"param": list(CONSTANTS | INPUT_FIELDS)}
@@ -90,7 +98,7 @@ class Processing:
                     request["param"],
                     to_process["forecast_ref_time"],
                     int(to_process["step"]),
-                    int(prev_file["step"]),
+                    prev_step,
                 )
                 ds_in |= metadata.extract_pv(ds_in["u"].message)
 
@@ -108,7 +116,10 @@ class Processing:
     def _apply_flexpart(self, ds_in: typing.Any) -> typing.Any:
         """Apply flexpart pre-processing and return processed data structure."""
         ds_out = flx.fflexpart(ds_in)
+        logger.info("flx.fflexpart has been applied successfully")
         prepare_output(ds_out, ds_in, INPUT_FIELDS, CONSTANTS)
+        logger.info("prepare_output has been applied successfully")
+
         return ds_out
 
     def _save_output(
