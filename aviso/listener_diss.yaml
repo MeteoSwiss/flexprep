@@ -7,13 +7,14 @@ listeners:
       domain: g
       stream: [oper, scda]
     triggers:
+      - type: log
+        path: avisoLogs/log_aviso_notifications.log
       - type: command
         working_dir: $HOME
         command: >
-          .aviso/run_docker_script.sh \
+          .aviso/my_docker_script.sh \
             --step "${request.step}" \
             --date "${request.date}" \
             --time "${request.time}" \
-            --location "${location}"
-      - type: log
-        path: ~/avisoLog.log
+            --location "${location}" >> avisoLogs/log_run_${request.date}_${request.time}.log 2>&1
+

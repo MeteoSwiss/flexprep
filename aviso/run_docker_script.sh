@@ -45,7 +45,7 @@ echo Notification received for file $LOCATION, date $DATE, time $TIME, step $STE
 docker run \
   --mount type=bind,source="$HOME/.sqlite/",destination=/src/db/ \
   --env-file .env \
-  493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep:2409.236bc87543d84233cd91984d61378b3c69511bb4 \
+  493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep:2409.ee22f6c67c86b9f85185edb02924e6ab523fa0bc \
   --step "$STEP" \
   --date "$DATE" \
   --time "$TIME" \
