@@ -122,8 +122,7 @@ class Processing:
         forecast_ref_time_str = forecast_ref_time.strftime("%Y%m%d%H%M")
 
         try:
-            key = f"output_dispf{forecast_ref_time_str}_step{step_to_process}"
-
+            key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
             with tempfile.NamedTemporaryFile(
                 suffix=key,
             ) as output_file:
