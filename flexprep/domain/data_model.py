@@ -10,6 +10,7 @@ class IFSForecast:
     step: int
     key: str
     processed: bool
+    flexpart: bool
 
     def to_dict(self) -> dict[str, typing.Any]:
         return asdict(self)

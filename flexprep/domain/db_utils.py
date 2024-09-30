@@ -32,6 +32,7 @@ class DB:
             step INTEGER NOT NULL,
             key TEXT NOT NULL,
             processed BOOLEAN NOT NULL,
+            flexpart BOOLEAN NOT NULL,
             UNIQUE(forecast_ref_time, step, key)
         )
         """
@@ -50,11 +51,18 @@ class DB:
                 # Insert the item and get the newly inserted row_id
                 result = self.conn.execute(
                     """
-                    INSERT INTO uploaded (forecast_ref_time, step, key, processed)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO uploaded (forecast_ref_time, step, key,
+                                        processed, flexpart)
+                    VALUES (?, ?, ?, ?, ?)
                     RETURNING row_id
                     """,
-                    (item.forecast_ref_time, item.step, item.key, item.processed),
+                    (
+                        item.forecast_ref_time,
+                        item.step,
+                        item.key,
+                        item.processed,
+                        item.flexpart,
+                    ),
                 )
 
                 # Fetch the row_id from the result and update the item's row_id
@@ -76,7 +84,7 @@ class DB:
         """
 
         query = (
-            "SELECT row_id, forecast_ref_time, step, key, processed "
+            "SELECT row_id, forecast_ref_time, step, key, processed, flexpart "
             "FROM uploaded "
             "WHERE forecast_ref_time = ?"
         )
@@ -93,6 +101,7 @@ class DB:
                         step=row[2],
                         key=row[3],
                         processed=row[4],
+                        flexpart=row[5],
                     )
                     for row in rows
                 ]

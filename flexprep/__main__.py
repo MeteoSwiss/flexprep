@@ -38,6 +38,7 @@ def create_ifs_forecast_obj(args):
             step=int(args.step),
             key=Path(args.location).name,
             processed=False,
+            flexpart=False,
         )
     except Exception as e:
         logger.error(f"Error creating IFSForecast object: {e}")
