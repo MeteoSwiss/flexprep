@@ -16,5 +16,5 @@ main:
       endpoint_url: https://object-store.os-api.cci1.ecmwf.int
       name: flexprep-output
   time_settings:
-    tincr: 3
+    tincr: 1 # Flexpart-IFS Global: 3, Europe: 1
     tstart: 0
