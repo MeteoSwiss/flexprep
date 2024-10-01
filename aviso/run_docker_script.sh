@@ -39,7 +39,7 @@ done
 
 echo Notification received for file $LOCATION, date $DATE, time $TIME, step $STEP
 
-# Run the Docker container
+# Run pre-processing for Flexpart
 # Note: The tag of the Docker image (after the colon ':') is manually updated here
 # after each push to reflect the latest version of the image.
 docker run \
@@ -51,10 +51,30 @@ docker run \
   --time "$TIME" \
   --location "$LOCATION"
 
+
 # Check if the Docker run was successful
 if [ $? -ne 0 ]; then
-  echo "Docker run failed."
+  echo "Docker run processing failed."
   exit 1
 fi
 
-echo "Docker container executed successfully."
+echo "Docker container processing executed successfully."
+
+# ====== Second part: Run flexpart ======
+# Call the Python script to handle the second part
+
+# Path to the SQLite database
+DB_PATH="$HOME/.sqlite/sqlite3-db"
+python3 aggregator_flexpart.py \
+  --date "$DATE" \
+  --time "$TIME" \
+  --step "$STEP" \
+  --db_path "$DB_PATH"
+
+# Capture the exit status of the Python script
+if [ $? -ne 0 ]; then
+  echo "Flexpart launch script encountered an error."
+  exit 1
+fi
+
+echo "Flexpart launch script executed successfully."
