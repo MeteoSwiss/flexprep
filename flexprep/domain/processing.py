@@ -130,9 +130,8 @@ class Processing:
                 # Write data to the temporary file
                 with open(output_file.name, "wb") as fout:
                     for name, field in ds_out.items():
-                        if field.attrs.get("v_coord") == "hybrid":
-                            logger.info(f"Writing GRIB fields to {output_file.name}")
-                            grib_decoder.save(field, fout)
+                        logger.info(f"Writing GRIB field {name} to {output_file.name}")
+                        grib_decoder.save(field, fout)
 
                     # Upload the file to S3
                     S3client().upload_file(output_file.name, key=key)
