@@ -124,17 +124,14 @@ class Processing:
         try:
             key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
 
-            with tempfile.NamedTemporaryFile(
-                suffix=key,
-            ) as output_file:
-                # Write data to the temporary file
-                with open(output_file.name, "wb") as fout:
-                    for name, field in ds_out.items():
-                        logger.info(f"Writing GRIB field {name} to {output_file.name}")
-                        grib_decoder.save(field, fout)
+            with tempfile.NamedTemporaryFile(suffix=key, delete=False, mode='wb') as output_file:
+                for name, field in ds_out.items():
+                    logger.info(f"Writing GRIB field {name} to {output_file.name}")
+                    grib_decoder.save(field, output_file)
 
-                    # Upload the file to S3
-                    S3client().upload_file(output_file.name, key=key)
+            # Upload the file to S3
+            S3client().upload_file(output_file.name, key=key)
+            os.remove(output_file.name)
 
             # Mark the item as processed if everything was successful
             DB().update_item_as_processed(row_id)
