@@ -101,7 +101,6 @@ class Processing:
             raise
 
         finally:
-            # Ensure temporary files are cleaned up
             for temp_file in temp_files:
                 os.unlink(temp_file)
 
@@ -124,10 +123,34 @@ class Processing:
         try:
             key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
 
-            with tempfile.NamedTemporaryFile(suffix=key, delete=False, mode='wb') as output_file:
+            ref = next(
+                f
+                for f in ds_out.values()
+                if metadata.extract_keys(f.message, "editionNumber") == 2
+            )
+
+            with tempfile.NamedTemporaryFile(
+                suffix=key, delete=False, mode="wb"
+            ) as output_file:
                 for name, field in ds_out.items():
-                    logger.info(f"Writing GRIB field {name} to {output_file.name}")
+                    if field.squeeze().isnull().all():
+                        logging.info(f"Ignoring field {field} - only NaN values")
+                        continue
+
+                    if metadata.extract_keys(field.message, "editionNumber") == 1:
+                        if name in ["lsp", "sshf", "ewss", "nsss"]:
+                            msg = metadata.override(
+                                ref.message,
+                                productDefinitionTemplateNumber=8,
+                                shortName=field.parameter["shortName"],
+                            )
+                        else:
+                            msg = metadata.override(
+                                ref.message, shortName=field.parameter["shortName"]
+                            )
+                        field.attrs = msg
                     grib_decoder.save(field, output_file)
+            logger.info("Writing GRIB fields to file completed.")
 
             # Upload the file to S3
             S3client().upload_file(output_file.name, key=key)
