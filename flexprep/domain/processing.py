@@ -123,14 +123,12 @@ class Processing:
         try:
             key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
 
+            ref_keys = "editionNumber", "productDefinitionTemplateNumber"
+            ref_values = 2, 0
             ref = next(
                 field
                 for field in ds_out.values()
-                if metadata.extract_keys(field.message, "editionNumber") == 2
-                and metadata.extract_keys(
-                    field.message, "productDefinitionTemplateNumber"
-                )
-                == 0
+                if metadata.extract_keys(field.message, ref_keys) == ref_values
             )
 
             with tempfile.NamedTemporaryFile(
