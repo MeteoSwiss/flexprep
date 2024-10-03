@@ -127,10 +127,14 @@ class Processing:
                 field
                 for field in ds_out.values()
                 if metadata.extract_keys(field.message, "editionNumber") == 2
+                and metadata.extract_keys(
+                    field.message, "productDefinitionTemplateNumber"
+                )
+                == 0
             )
 
             with tempfile.NamedTemporaryFile(
-                suffix=key, delete=False, mode="wb"
+                suffix=key,
             ) as output_file:
                 for name, field in ds_out.items():
                     if field.isnull().all():
@@ -138,23 +142,27 @@ class Processing:
                         continue
 
                     if metadata.extract_keys(field.message, "editionNumber") == 1:
-                        if name in ["lsp", "sshf", "ewss", "nsss"]:
+                        # Variables in this set have undergone statistical
+                        # processing (e.g., aggregation), so the
+                        # productDefinitionTemplateNumber must change
+                        # (e.g., to include typeOfStatisticalProcessing).
+                        if name in set(["lsp", "sshf", "ewss", "nsss"]):
                             msg = metadata.override(
                                 ref.message,
                                 productDefinitionTemplateNumber=8,
                                 shortName=field.parameter["shortName"],
                             )
                         else:
+                            # No statistical processing; only override the shortName.
                             msg = metadata.override(
                                 ref.message, shortName=field.parameter["shortName"]
                             )
                         field.attrs = msg
                     grib_decoder.save(field, output_file)
-            logger.info("Writing GRIB fields to file completed.")
+                logger.info("Writing GRIB fields to file completed.")
 
-            # Upload the file to S3
-            S3client().upload_file(output_file.name, key=key)
-            os.remove(output_file.name)
+                # Upload the file to S3
+                S3client().upload_file(output_file.name, key=key)
 
             # Mark the item as processed if everything was successful
             DB().update_item_as_processed(row_id)
