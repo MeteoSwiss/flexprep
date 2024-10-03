@@ -101,7 +101,6 @@ class Processing:
             raise
 
         finally:
-            # Ensure temporary files are cleaned up
             for temp_file in temp_files:
                 os.unlink(temp_file)
 
@@ -122,20 +121,46 @@ class Processing:
         forecast_ref_time_str = forecast_ref_time.strftime("%Y%m%d%H%M")
 
         try:
-            key = f"output_dispf{forecast_ref_time_str}_step{step_to_process}"
+            key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
+
+            ref_keys = "editionNumber", "productDefinitionTemplateNumber"
+            ref_values = 2, 0
+            ref = next(
+                field
+                for field in ds_out.values()
+                if metadata.extract_keys(field.message, ref_keys) == ref_values
+            )
 
             with tempfile.NamedTemporaryFile(
                 suffix=key,
             ) as output_file:
-                # Write data to the temporary file
-                with open(output_file.name, "wb") as fout:
-                    for name, field in ds_out.items():
-                        if field.attrs.get("v_coord") == "hybrid":
-                            logger.info(f"Writing GRIB fields to {output_file.name}")
-                            grib_decoder.save(field, fout)
+                for name, field in ds_out.items():
+                    if field.isnull().all():
+                        logging.info(f"Ignoring field {field} - only NaN values")
+                        continue
 
-                    # Upload the file to S3
-                    S3client().upload_file(output_file.name, key=key)
+                    if metadata.extract_keys(field.message, "editionNumber") == 1:
+                        # Variables in this set have undergone statistical
+                        # processing (e.g., aggregation), so the
+                        # productDefinitionTemplateNumber must change
+                        # (e.g., to include typeOfStatisticalProcessing).
+                        if name in set(["lsp", "sshf", "ewss", "nsss"]):
+                            msg = metadata.override(
+                                ref.message,
+                                productDefinitionTemplateNumber=8,
+                                shortName=field.parameter["shortName"],
+                            )
+                        else:
+                            # No statistical processing; only override the shortName.
+                            msg = metadata.override(
+                                ref.message, shortName=field.parameter["shortName"]
+                            )
+                        field.attrs = msg
+                    grib_decoder.save(field, output_file)
+                logger.info("Writing GRIB fields to file completed.")
+
+                # Upload the file to S3
+                S3client().upload_file(output_file.name, key=key)
 
             # Mark the item as processed if everything was successful
             DB().update_item_as_processed(row_id)
