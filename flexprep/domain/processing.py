@@ -124,16 +124,16 @@ class Processing:
             key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
 
             ref = next(
-                f
-                for f in ds_out.values()
-                if metadata.extract_keys(f.message, "editionNumber") == 2
+                field
+                for field in ds_out.values()
+                if metadata.extract_keys(field.message, "editionNumber") == 2
             )
 
             with tempfile.NamedTemporaryFile(
                 suffix=key, delete=False, mode="wb"
             ) as output_file:
                 for name, field in ds_out.items():
-                    if field.squeeze().isnull().all():
+                    if field.isnull().all():
                         logging.info(f"Ignoring field {field} - only NaN values")
                         continue
 

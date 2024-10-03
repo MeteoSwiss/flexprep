@@ -51,10 +51,6 @@ def prepare_output(
 
     ds_out["etadot"] = ds_out.pop("omega")
 
-    cp_attrs = ds_out["cp"].attrs.copy()
-    ds_out["cp"] = ds_out["cp"] * 1000
-    ds_out["cp"] = ds_out["cp"].assign_attrs(cp_attrs)
+    ds_out["cp"] = (ds_out["cp"] * 1000).assign_attrs(ds_out["cp"].attrs)
 
-    lsp_attrs = ds_out["lsp"].attrs.copy()
-    ds_out["lsp"] = ds_out["lsp"] * 100
-    ds_out["lsp"] = ds_out["lsp"].assign_attrs(lsp_attrs)
+    ds_out["lsp"] = (ds_out["lsp"] * 100).assign_attrs(ds_out["lsp"].attrs)
