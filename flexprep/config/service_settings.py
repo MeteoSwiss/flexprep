@@ -28,3 +28,6 @@ class AppSettings(BaseModel):
 class ServiceSettings(BaseServiceSettings):
     logging: LoggingSettings
     main: AppSettings
+
+    class Config:
+        env_prefix = "SVC__"  # Shortenend prefix
