@@ -10,11 +10,11 @@ main:
   db_path: /src/db/sqlite3-db
   s3_buckets:
     input:
-      endpoint_url: "${INPUT_FLEXPREP_S3_ENDPOINT_URL}"
-      name: "${INPUT_FLEXPREP_S3_NAME}"
+      endpoint_url: https://object-store.os-api.cci1.ecmwf.int
+      name: flexpart-input
     output:
-      endpoint_url: "${OUTPUT_FLEXPREP_S3_ENDPOINT_URL}"
-      name: "${OUTPUT_FLEXPREP_S3_NAME}"
+      endpoint_url: https://object-store.os-api.cci1.ecmwf.int
+      name: flexprep-output
   time_settings:
-    tincr: ${TIME_FLEXPREP_INCREMENT}
-    tstart: ${TIME_FLEXPREP_START}
+    tincr: 3
+    tstart: 0
