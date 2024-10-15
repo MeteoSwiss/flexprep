@@ -3,10 +3,10 @@ class Globals {
     static final String PROJECT = 'flexprep'
     static final String NEXUS_IMAGE_REPO_INTERN = 'docker-intern-nexus.meteoswiss.ch'
     static final String NEXUS_IMAGE_REPO_PUBLIC = 'docker-public-nexus.meteoswiss.ch'
-    static final String NEXUS_IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/flexpart_ifs/flexprep'
-    static final String NEXUS_IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/numericalweatherpredictions/flexpart_ifs/flexprep'
+    static final String NEXUS_IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/dispersionmodelling/flexpart_ifs/flexprep'
+    static final String NEXUS_IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/numericalweatherpredictions/dispersionmodelling/flexpart_ifs/flexprep'
     static final String ECR_REPO = '493666016161.dkr.ecr.eu-central-2.amazonaws.com'
-    static final String ECR_IMAGE_NAME = '493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/flexpart_ifs/flexprep'
+    static final String ECR_IMAGE_NAME = '493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/dispersionmodelling/flexpart_ifs/flexprep'
 
 
     // sets the pipeline to execute all steps related to building the service
