@@ -3,10 +3,10 @@ class Globals {
     static final String PROJECT = 'flexprep'
     static final String NEXUS_IMAGE_REPO_INTERN = 'docker-intern-nexus.meteoswiss.ch'
     static final String NEXUS_IMAGE_REPO_PUBLIC = 'docker-public-nexus.meteoswiss.ch'
-    static final String NEXUS_IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/dispersionmodelling/flexpart_ifs/flexprep'
-    static final String NEXUS_IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/numericalweatherpredictions/dispersionmodelling/flexpart_ifs/flexprep'
+    static final String NEXUS_IMAGE_NAME_INTERN = 'docker-intern-nexus.meteoswiss.ch/numericalweatherpredictions/dispersionmodelling/flexpart-ifs/flexprep'
+    static final String NEXUS_IMAGE_NAME_PUBLIC = 'docker-public-nexus.meteoswiss.ch/numericalweatherpredictions/dispersionmodelling/flexpart-ifs/flexprep'
     static final String ECR_REPO = '493666016161.dkr.ecr.eu-central-2.amazonaws.com'
-    static final String ECR_IMAGE_NAME = '493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/dispersionmodelling/flexpart_ifs/flexprep'
+    static final String ECR_IMAGE_NAME = '493666016161.dkr.ecr.eu-central-2.amazonaws.com/numericalweatherpredictions/dispersionmodelling/flexpart-ifs/flexprep'
 
 
     // sets the pipeline to execute all steps related to building the service
@@ -62,9 +62,9 @@ pipeline {
             description: 'Build type',
             name: 'buildChoice')
 
-        choice(choices: ['flexpart_ifs-devt',
-                         'flexpart_ifs-depl',
-                         'flexpart_ifs-prod'],
+        choice(choices: ['flexpart-ifs-devt',
+                         'flexpart-ifs-depl',
+                         'flexpart-ifs-prod'],
                description: 'Environment',
                name: 'environment')
 
@@ -266,7 +266,7 @@ pipeline {
                             aws ecr get-login-password --region eu-central-2 | podman login --username AWS --password-stdin --cert-dir /etc/ssl/certs ${Globals.ECR_REPO}
 
                             podman push --cert-dir /etc/ssl/certs ${Globals.imageTagECR}
-                            aws ssm put-parameter --name "/flexpart_ifs/flexprep/containertag" --type "String" --value "${TAG}" --overwrite --region eu-central-2
+                            aws ssm put-parameter --name "/flexpart-ifs/flexprep/containertag" --type "String" --value "${TAG}" --overwrite --region eu-central-2
 
                             """
                             }
