@@ -144,7 +144,7 @@ class Processing:
                         # processing (e.g., aggregation), so the
                         # productDefinitionTemplateNumber must change
                         # (e.g., to include typeOfStatisticalProcessing).
-                        if name in set(["lsp", "sshf", "ewss", "nsss"]):
+                        if name in set(["lsp", "sshf", "ewss", "nsss", "cp", "ssr"]):
                             msg = metadata.override(
                                 ref.message,
                                 productDefinitionTemplateNumber=8,

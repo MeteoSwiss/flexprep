@@ -42,10 +42,10 @@ def prepare_output(
     missing_const = (ds_in.keys() & constant_fields) - ds_out.keys()
 
     for field in ds_out:
-        ds_out[field] = ds_out[field].isel(lead_time=-1)
+        ds_out[field] = ds_out[field].isel(lead_time=[-1])
     for field in missing_fields:
         logger.warning(f"Field '{field}' not found in output")
-        ds_out[field] = ds_in[field].isel(lead_time=-1)
+        ds_out[field] = ds_in[field].isel(lead_time=[-1])
     for field in missing_const:
         ds_out[field] = ds_in[field]
 
