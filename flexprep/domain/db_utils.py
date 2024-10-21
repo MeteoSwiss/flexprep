@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+from datetime import datetime as dt
 
 from flexprep import CONFIG
 from flexprep.domain.data_model import IFSForecast
@@ -15,13 +16,13 @@ class DB:
             """Establish a database connection."""
             self.db_path = CONFIG.main.db_path
             self.conn = sqlite3.connect(self.db_path)
-            logger.info("Connected to database.")
+            logger.debug("Connected to database.")
             self._initialize_db()
         except sqlite3.Error as e:
             logger.exception(f"An error occurred: {e}")
             raise
         else:
-            logger.info("Database setup complete.")
+            logger.debug("Database setup complete.")
 
     def _initialize_db(self) -> None:
         """Create tables if they do not exist."""
@@ -38,7 +39,7 @@ class DB:
         try:
             with self.conn:
                 self.conn.execute(create_table_query)
-                logger.info("Table uploaded is ready.")
+                logger.debug("Table uploaded is ready.")
         except sqlite3.Error as e:
             logger.exception(f"An error occurred while initializing the database: {e}")
             raise
@@ -60,12 +61,12 @@ class DB:
                 # Fetch the row_id from the result and update the item's row_id
                 item.row_id = result.fetchone()[0]
 
-            logger.info("Data inserted successfully")
+            logger.debug("Data inserted successfully")
         except sqlite3.Error as e:
             logger.exception(f"An error occurred while inserting data: {e}")
             raise
 
-    def query_table(self, forecast_ref_time: str) -> list[IFSForecast]:
+    def query_table(self, forecast_ref_time: dt) -> list[IFSForecast]:
         """Query the table for items with a specific forecast_ref_time.
 
         Args:
@@ -85,7 +86,7 @@ class DB:
             with self.conn:
                 cursor = self.conn.execute(query, (forecast_ref_time,))
                 rows = cursor.fetchall()
-                logger.info(f"Query returned {len(rows)} items.")
+                logger.debug(f"Query returned {len(rows)} items.")
                 results = [
                     IFSForecast(
                         row_id=row[0],
@@ -120,4 +121,59 @@ class DB:
                     logger.warning("No item found to update.")
         except sqlite3.Error as e:
             logger.exception(f"An error occurred while updating the item: {e}")
+            raise
+
+    def get_pending_steps_from_db(
+        self, forecast_ref_time: dt, step: int
+    ) -> list[IFSForecast]:
+        """Query the table for items with a specific forecast_ref_time,
+        where 'processed' is False, the step is not zero, the current
+        timestep is excluded, and the step is aligned with the configured
+        time increment, ordered by ascending step.
+        Args:
+            forecast_ref_time (str): The forecast reference time to query for.
+
+        Returns:
+            list[IFSForecast]: A list of IFSForecast objects that match the query.
+        """
+        # Get the time settings from the configuration
+        tstart = CONFIG.main.time_settings.tstart
+        tincr = CONFIG.main.time_settings.tincr
+
+        query = (
+            "SELECT row_id, forecast_ref_time, step, key, processed "
+            "FROM uploaded "
+            "WHERE forecast_ref_time = ? "
+            "AND processed = FALSE "
+            "AND step != 0 "
+            "AND step != ? "
+            "AND (step - ?) % ? = 0 "
+            "ORDER BY step ASC"
+        )
+
+        try:
+            with self.conn:
+                cursor = self.conn.execute(
+                    query, (forecast_ref_time, step, tstart, tincr)
+                )
+                rows = cursor.fetchall()
+                logger.info(f"Query returned {len(rows)} pending timestep(s).")
+                if len(rows) > 0:
+                    logger.info("Initiating processing of pending timestep(s).")
+
+                # Convert the result rows into IFSForecast objects
+                results = [
+                    IFSForecast(
+                        row_id=row[0],
+                        forecast_ref_time=dt.strptime(row[1], "%Y-%m-%d %H:%M:%S"),
+                        step=row[2],
+                        key=row[3],
+                        processed=row[4],
+                    )
+                    for row in rows
+                ]
+                return results
+
+        except sqlite3.Error as e:
+            logger.exception(f"An error occurred while querying the database: {e}")
             raise

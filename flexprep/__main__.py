@@ -7,6 +7,7 @@ from datetime import datetime as dt
 from pathlib import Path
 
 from flexprep.domain.data_model import IFSForecast
+from flexprep.domain.db_utils import DB
 from flexprep.domain.prepare_processing import launch_pre_processing
 
 logger = logging.getLogger(__name__)
@@ -55,5 +56,23 @@ if __name__ == "__main__":
     )
 
     ifs_forecast_obj = create_ifs_forecast_obj(args)
+    db = DB()
 
+    # Insert the forecast object into the database
+    db.insert_item(ifs_forecast_obj)
+    logger.info(
+        f"Put item ({ifs_forecast_obj.forecast_ref_time}, "
+        f"{ifs_forecast_obj.step}, {ifs_forecast_obj.key}) succeeded."
+    )
+
+    # Initiate the processing of the current step
     launch_pre_processing(ifs_forecast_obj)
+
+    # Since the forecast steps may arrive out of sequence,
+    # process any earlier steps that were previously skipped
+    pending_fcst_objs = DB().get_pending_steps_from_db(
+        ifs_forecast_obj.forecast_ref_time, ifs_forecast_obj.step
+    )
+
+    for obj in pending_fcst_objs:
+        launch_pre_processing(obj)

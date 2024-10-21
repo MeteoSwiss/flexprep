@@ -10,13 +10,6 @@ logger = logging.getLogger(__name__)
 def launch_pre_processing(ifs_forecast_obj):
     db = DB()
 
-    # Insert the forecast object into the database
-    db.insert_item(ifs_forecast_obj)
-    logger.info(
-        f"Put item ({ifs_forecast_obj.forecast_ref_time}, "
-        f"{ifs_forecast_obj.step}, {ifs_forecast_obj.key}) succeeded."
-    )
-
     # Query the table for items with the same forecast reference time
     items_in_table = db.query_table(ifs_forecast_obj.forecast_ref_time)
 
