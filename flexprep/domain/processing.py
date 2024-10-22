@@ -22,6 +22,9 @@ class Processing:
         self.s3_client = S3client()
 
     def process(self, file_objs: list[FileObject]) -> None:
+        if file_objs:
+            logger.info(f"Processing timestep: {file_objs[-1]['step']}")
+
         result = self._sort_and_download_files(file_objs)
         if result is None:
             logger.exception("Failed to sort and download files.")

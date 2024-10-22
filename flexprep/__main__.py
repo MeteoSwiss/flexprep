@@ -8,7 +8,7 @@ from pathlib import Path
 
 from flexprep.domain.data_model import IFSForecast
 from flexprep.domain.db_utils import DB
-from flexprep.domain.prepare_processing import launch_pre_processing
+from flexprep.domain.processing import Processing
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +26,9 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def create_ifs_forecast_obj(args):
+def create_forecast_object_from_args(args):
     """Create an IFSForecast object based on the parsed arguments."""
     try:
-
-        # Combine date and time to create forecast_ref_time
         forecast_ref_time_str = f"{args.date}{int(args.time):02d}00"
         forecast_ref_time = dt.strptime(forecast_ref_time_str, "%Y%m%d%H%M")
         return IFSForecast(
@@ -40,39 +38,46 @@ def create_ifs_forecast_obj(args):
             key=Path(args.location).name,
             processed=False,
         )
+    except ValueError as ve:
+        logger.error(f"Invalid date or time format: {ve}")
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"Error creating IFSForecast object: {e}")
+        logger.error(f"Unexpected error while creating forecast object: {e}")
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    """Main function to parse arguments and process the IFS forecast."""
+def insert_forecast_in_db(ifs_forecast_obj, db):
+    """Insert an IFSForecast object into the database."""
+    try:
+        db.insert_item(ifs_forecast_obj)
+        logger.info(
+            f"Successfully inserted item ({ifs_forecast_obj.forecast_ref_time}, "
+            f"Step: {ifs_forecast_obj.step}, Key: {ifs_forecast_obj.key})"
+        )
+    except Exception as e:
+        logger.error(f"Failed to insert item into the database: {e}")
+        sys.exit(1)
 
+
+def process_forecast(args, db):
+    """Insert forecast in DB and find processable steps."""
+    # Create the forecast object and insert it into the DB
+    ifs_forecast_obj = create_forecast_object_from_args(args)
+    insert_forecast_in_db(ifs_forecast_obj, db)
+
+    # Get the processable steps
+    processable_steps = db.get_processable_steps(ifs_forecast_obj.forecast_ref_time)
+    return processable_steps
+
+
+if __name__ == "__main__":
     args = parse_arguments()
     logger.info(
-        f"Notification received for file - "
-        f"Step: {args.step}, Date: {args.date}, "
+        f"Notification received for file - Step: {args.step}, Date: {args.date}, "
         f"Time: {args.time}, Location: {args.location}"
     )
 
-    ifs_forecast_obj = create_ifs_forecast_obj(args)
     db = DB()
-
-    # Insert the forecast object into the database
-    db.insert_item(ifs_forecast_obj)
-    logger.info(
-        f"Put item ({ifs_forecast_obj.forecast_ref_time}, "
-        f"{ifs_forecast_obj.step}, {ifs_forecast_obj.key}) succeeded."
-    )
-
-    # Initiate the processing of the current step
-    launch_pre_processing(ifs_forecast_obj)
-
-    # Since the forecast steps may arrive out of sequence,
-    # process any earlier steps that were previously skipped
-    pending_fcst_objs = DB().get_pending_steps_from_db(
-        ifs_forecast_obj.forecast_ref_time, ifs_forecast_obj.step
-    )
-
-    for obj in pending_fcst_objs:
-        launch_pre_processing(obj)
+    processable_steps = process_forecast(args, db)
+    for to_process in processable_steps:
+        Processing().process(to_process)
