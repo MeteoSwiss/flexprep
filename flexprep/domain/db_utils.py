@@ -17,6 +17,7 @@ class DB:
             """Establish a database connection."""
             self.db_path = CONFIG.main.db_path
             self.conn = sqlite3.connect(self.db_path)
+            self.conn.row_factory = sqlite3.Row
             logger.debug("Connected to database.")
             self._initialize_db()
         except sqlite3.Error as e:
@@ -106,7 +107,7 @@ class DB:
 
                 if not rows:
                     logger.info(
-                        f"No pending timesteps available for forecast_ref_time={forecast_ref_time}."
+                        f"No timesteps available for forecast_ref_time={forecast_ref_time}."
                     )
                     return []
 
@@ -139,6 +140,7 @@ class DB:
             "WHERE forecast_ref_time = ? AND step = 0 "
             "LIMIT 2"
         )
+
         cursor = self.conn.execute(step_zero_query, (forecast_ref_time,))
         return cursor.fetchall()
 
@@ -156,41 +158,40 @@ class DB:
         tincr = CONFIG.main.time_settings.tincr
 
         step_query = """
-        WITH step_data AS (
-            SELECT
-                cur.row_id AS cur_row_id,
-                cur.forecast_ref_time AS cur_forecast_ref_time,
-                cur.step AS cur_step,
-                cur.key AS cur_key,
-                cur.processed AS cur_processed,
-                prev.row_id AS prev_row_id,
-                prev.forecast_ref_time AS prev_forecast_ref_time,
-                prev.step AS prev_step,
-                prev.key AS prev_key,
-                prev.processed AS prev_processed,
-                ROW_NUMBER() OVER (PARTITION BY cur.step ORDER BY cur.step ASC) AS rn
-            FROM
-                uploaded cur
-            LEFT JOIN
-                uploaded prev
-            ON
-                cur.forecast_ref_time = prev.forecast_ref_time
-                AND prev.step = cur.step - ?
-            WHERE
-                cur.forecast_ref_time = ?
-                AND cur.processed = FALSE
-                AND cur.step != 0
-                AND (cur.step - ?) % ? = 0
-        )
-        SELECT *
-        FROM step_data
-        WHERE (prev_step = 0 AND rn = 1) OR (prev_step != 0) OR (prev_step is NULL)
-        ORDER BY cur_step ASC;
+        SELECT
+            cur.row_id AS cur_row_id,
+            cur.forecast_ref_time AS cur_forecast_ref_time,
+            cur.step AS cur_step,
+            cur.key AS cur_key,
+            cur.processed AS cur_processed,
+            prev.row_id AS prev_row_id,
+            prev.forecast_ref_time AS prev_forecast_ref_time,
+            prev.step AS prev_step,
+            prev.key AS prev_key,
+            prev.processed AS prev_processed
+        FROM
+            uploaded cur
+        LEFT JOIN
+            uploaded prev ON cur.forecast_ref_time = prev.forecast_ref_time
+                        AND prev.step = cur.step - ?
+                        -- Omit the constant file (stream 'S') to avoid duplicates,
+                        -- as it also has prev.step = 0
+                        AND (prev_step != 0 OR SUBSTRING(prev.key, 3, 1) = 'S')
+
+        WHERE
+            cur.forecast_ref_time = ? AND
+            cur.processed = FALSE AND
+            cur.step != 0 AND
+            (cur.step - ?) % ? = 0 AND
+            prev.step is not NULL
+        ORDER BY
+            cur.step;
         """
 
         cursor = self.conn.execute(
             step_query, (tincr, forecast_ref_time, tstart, tincr)
         )
+
         return cursor.fetchall()
 
     def _prepare_processable_steps(self, step_zero_items: list, rows: list) -> list:
@@ -210,11 +211,13 @@ class DB:
         # Create step-0 IFSForecast objects
         step_zero_forecasts = [
             IFSForecast(
-                row_id=zero_row[0],
-                forecast_ref_time=dt.strptime(zero_row[1], "%Y-%m-%d %H:%M:%S"),
-                step=int(zero_row[2]),
-                key=zero_row[3],
-                processed=zero_row[4],
+                row_id=zero_row["row_id"],
+                forecast_ref_time=dt.strptime(
+                    zero_row["forecast_ref_time"], "%Y-%m-%d %H:%M:%S"
+                ),
+                step=int(zero_row["step"]),
+                key=zero_row["key"],
+                processed=zero_row["processed"],
             ).to_dict()
             for zero_row in step_zero_items
         ]
@@ -222,37 +225,34 @@ class DB:
         for row in rows:
             current_step = row[2]  # cur_step
             prev_step = current_step - CONFIG.main.time_settings.tincr
-            prev_row_id = row[5]
 
             # Start with step-0 items
             processable_list = step_zero_forecasts.copy()
 
-            # If previous step exists and is not step-0, add it
-            if prev_row_id is not None and prev_step != 0:  # prev_row_id is present
+            # If previous step is not step-0, add it
+            if prev_step != 0:
                 processable_list.append(
                     IFSForecast(
-                        row_id=row[5],  # prev_row_id
-                        forecast_ref_time=dt.strptime(row[6], "%Y-%m-%d %H:%M:%S"),
-                        step=int(row[7]),  # prev_step
-                        key=row[8],  # prev_key
-                        processed=row[9],  # prev_processed
+                        row_id=row["prev_row_id"],
+                        forecast_ref_time=dt.strptime(
+                            row["prev_forecast_ref_time"], "%Y-%m-%d %H:%M:%S"
+                        ),
+                        step=int(row["prev_step"]),
+                        key=row["prev_key"],
+                        processed=row["prev_processed"],
                     ).to_dict()
                 )
-            elif prev_row_id is None:
-                logger.info(
-                    f"Step {current_step} skipped, "
-                    f"previous step {prev_step} not found."
-                )
-                continue
 
             # Add the current step to the processable list
             processable_list.append(
                 IFSForecast(
-                    row_id=row[0],  # cur_row_id
-                    forecast_ref_time=dt.strptime(row[1], "%Y-%m-%d %H:%M:%S"),
-                    step=int(row[2]),  # cur_step
-                    key=row[3],  # cur_key
-                    processed=row[4],  # cur_processed
+                    row_id=row["cur_row_id"],
+                    forecast_ref_time=dt.strptime(
+                        row["cur_forecast_ref_time"], "%Y-%m-%d %H:%M:%S"
+                    ),
+                    step=int(row["cur_step"]),
+                    key=row["cur_key"],
+                    processed=row["cur_processed"],
                 ).to_dict()
             )
 
