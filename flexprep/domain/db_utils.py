@@ -174,9 +174,10 @@ class DB:
         LEFT JOIN
             uploaded prev ON cur.forecast_ref_time = prev.forecast_ref_time
                         AND prev.step = cur.step - ?
-                        -- Omit the constant file (stream 'S') to avoid duplicates,
-                        -- as it also has prev.step = 0
-                        AND (prev_step != 0 OR SUBSTRING(prev.key, 3, 1) = 'S')
+                        -- Skip constants file (key ends in '11')
+                        -- to avoid duplicate cur.step
+                        -- as constants file also has prev.step = 0
+                        AND (prev_step != 0 OR RIGHT(prev.key, 2) != '11')
 
         WHERE
             cur.forecast_ref_time = ? AND
