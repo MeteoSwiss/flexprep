@@ -3,6 +3,7 @@ import os
 import tempfile
 import typing
 from datetime import datetime as dt
+from datetime import timedelta
 
 import meteodatalab.operators.flexpart as flx
 from meteodatalab import config, data_source, grib_decoder, metadata
@@ -121,10 +122,10 @@ class Processing:
         row_id: int,
     ) -> None:
         """Save processed data to a temporary file and upload to output-S3."""
-        forecast_ref_time_str = forecast_ref_time.strftime("%Y%m%d%H%M")
-
         try:
-            key = f"output_dispf{forecast_ref_time_str}{step_to_process}"
+            lead_time = forecast_ref_time + timedelta(hours=step_to_process)
+            lead_time_str = lead_time.strftime("%Y%m%d%H")
+            key = f"dispf{lead_time_str}"
 
             ref_keys = "editionNumber", "productDefinitionTemplateNumber"
             ref_values = 2, 0

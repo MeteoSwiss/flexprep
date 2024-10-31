@@ -19,7 +19,8 @@ def validate_dataset(
     if not all(
         (
             np.array_equal(
-                array.coords["lead_time"].values, [pd.to_timedelta(0, "h").value]
+                array.coords["lead_time"].values,
+                [pd.to_timedelta(0, "h").value],
             )
         )
         or (

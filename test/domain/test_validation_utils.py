@@ -49,7 +49,8 @@ def test_missing_param(setup_data):
     del ds["pressure"]
 
     with pytest.raises(
-        ValueError, match="Not all requested parameters are present in the dataset"
+        ValueError,
+        match="Not all requested parameters are present in the dataset",
     ):
         validate_dataset(ds, params, ref_time, step, prev_step)
 
