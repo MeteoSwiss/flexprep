@@ -149,7 +149,7 @@ class Processing:
                         # productDefinitionTemplateNumber must change
                         # (e.g., to include typeOfStatisticalProcessing).
                         if name in set(["lsp", "sshf", "ewss", "nsss", "cp", "ssr"]):
-                            msg = metadata.override(
+                            md = metadata.override(
                                 ref.message,
                                 productDefinitionTemplateNumber=8,
                                 shortName=field.parameter["shortName"],
@@ -157,18 +157,25 @@ class Processing:
                         else:
                             # No statistical processing;
                             # only override the shortName
-                            msg = metadata.override(
+                            md = metadata.override(
                                 ref.message,
                                 shortName=field.parameter["shortName"],
                             )
                         # Set level to 0 for surface fields, which are identified
                         # by "typeOfFirstFixedSurface" = 1
-                        if metadata.extract_keys(msg, "typeOfFirstFixedSurface") == 1:
-                            msg = metadata.override(
-                                msg, shortName=field.parameter["shortName"], level=0
+                        if (
+                            metadata.extract_keys(
+                                md["message"], "typeOfFirstFixedSurface"
+                            )
+                            == 1
+                        ):
+                            md = metadata.override(
+                                md["message"],
+                                shortName=field.parameter["shortName"],
+                                level=0,
                             )
 
-                        field.attrs = msg
+                        field.attrs = md
                     grib_decoder.save(field, output_file)
                 logger.info("Writing GRIB fields to file completed.")
 
