@@ -144,8 +144,6 @@ class Processing:
                         continue
 
                     if metadata.extract_keys(field.message, "editionNumber") == 1:
-                        # All GRIB1 variables needed are surface type at level 0,
-                        # so we need to overwrite this level information.
                         # Variables in this set have undergone statistical
                         # processing (e.g., aggregation), so the
                         # productDefinitionTemplateNumber must change
@@ -155,18 +153,21 @@ class Processing:
                                 ref.message,
                                 productDefinitionTemplateNumber=8,
                                 shortName=field.parameter["shortName"],
-                                typeOfLevel="surface",
-                                level=int(0),
                             )
                         else:
                             # No statistical processing;
-                            # only override the shortName, typeOfLevel and level
+                            # only override the shortName
                             msg = metadata.override(
                                 ref.message,
                                 shortName=field.parameter["shortName"],
-                                typeOfLevel="surface",
-                                level=int(0),
                             )
+                        # Set level to 0 for surface fields, which are identified
+                        # by "typeOfFirstFixedSurface" = 1
+                        if metadata.extract_keys(msg, "typeOfFirstFixedSurface") == 1:
+                            msg = metadata.override(
+                                msg, shortName=field.parameter["shortName"], level=0
+                            )
+
                         field.attrs = msg
                     grib_decoder.save(field, output_file)
                 logger.info("Writing GRIB fields to file completed.")
