@@ -1,4 +1,4 @@
-"""Pre-Process IFS HRES data as input to Flexpart."""
+"""Pre-Process IFS data as input to Flexpart."""
 
 import json
 import logging
