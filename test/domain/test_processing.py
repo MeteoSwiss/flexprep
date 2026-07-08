@@ -168,9 +168,9 @@ class TestGenerateAndUploadGribFile:
         assert not fake_path.exists()
 
     @pytest.mark.parametrize("tincr,input_file,expected_model,expected_domain", [
-        [1, IFSForecastFile(object_key=_F2_FILENAME,filename=_F2_FILENAME,), "IFS-HRES-Europe", "EUROPE"],
-        [3, IFSForecastFile(object_key=_F2_FILENAME,filename=_F2_FILENAME,), "IFS-HRES", "EUROPE"],
-        [3, IFSForecastFile(object_key=_F1_FILENAME,filename=_F1_FILENAME,), "IFS-HRES", "GLOBAL"],
+        [1, IFSForecastFile(object_key=_F2_FILENAME,filename=_F2_FILENAME,), "IFS-Europe", "EUROPE"],
+        [3, IFSForecastFile(object_key=_F2_FILENAME,filename=_F2_FILENAME,), "IFS-Global", "EUROPE"],
+        [3, IFSForecastFile(object_key=_F1_FILENAME,filename=_F1_FILENAME,), "IFS-Global", "GLOBAL"],
     ])
     def test_upload_metadata_contains_required_keys(self, processed_fields, input_file,
                                                     fake_path, tmp_path, tincr, expected_model, expected_domain):

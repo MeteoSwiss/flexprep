@@ -26,7 +26,7 @@ FORECAST_REF_TIME = datetime(2026, 3, 31, 6, 0, 0, tzinfo=timezone.utc)
 REF_TIME_KEY = int(FORECAST_REF_TIME.timestamp())
 
 _F2_FILENAME_TEMPLATE = "s4y_f2_ifs-ens-cf_od_scda_fc_20260331T060000Z_20260403T080000Z_{step}h"
-_F1_FILENAME_TEMPLATE = "s4y_f1_ifs-hres_od_scda_fc_20260331T060000Z_20260403T080000Z_{step}h"
+_F1_FILENAME_TEMPLATE = "s4y_f1_ifs-ens-cf_od_scda_fc_20260331T060000Z_20260403T080000Z_{step}h"
 
 
 def _put_items(table, items: list[tuple[int, str]]) -> None:

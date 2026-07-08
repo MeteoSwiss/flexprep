@@ -53,11 +53,11 @@ def _generate_and_upload_grib_file(output_dir: Path,
     logger.info("Writing GRIB2 file to %s ...", output_dir)
 
     _UPLOAD_CONFIG: dict[tuple[Feed, int], tuple[str, str, str]] = {
-        (Feed.F1, 3):    ("dispc", CONFIG.main.target_s3_bucket_name_global, "IFS-HRES"),
-        # when uploading to GLOBAL bucket a EUROPE domain file, use IFS-HRES as model name
+        (Feed.F1, 3):    ("dispc", CONFIG.main.target_s3_bucket_name_global, "IFS-Global"),
+        # when uploading to GLOBAL bucket a EUROPE domain file, use IFS-Global as model name
         # (as convention with lead time aggregator)
-        (Feed.F2, 3):    ("dispf", CONFIG.main.target_s3_bucket_name_global, "IFS-HRES"),
-        (Feed.F2, 1):    ("dispf", CONFIG.main.target_s3_bucket_name_europe, "IFS-HRES-Europe"),
+        (Feed.F2, 3):    ("dispf", CONFIG.main.target_s3_bucket_name_global, "IFS-Global"),
+        (Feed.F2, 1):    ("dispf", CONFIG.main.target_s3_bucket_name_europe, "IFS-Europe"),
     }
 
     config = _UPLOAD_CONFIG.get((input_file.domain, tincr))
